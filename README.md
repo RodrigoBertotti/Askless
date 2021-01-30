@@ -26,14 +26,14 @@ allowing to:
 - :lock: accept and deny connection attempts
 
 This is the server side in Node.js, check also the
-[Flutter client](https://github.com/DesiredApp/askless-flutter-client) 
-or if you prefer the [JavaScript client](https://github.com/DesiredApp/askless-javascript-client).
+[Flutter client](https://github.com/WiseTap/askless-flutter-client) 
+or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-javascript-client).
 
 
 ## Important links
 *  [Server documentation](documentation/english_documentation.md)
-*  [Getting Started (Flutter client)](https://github.com/DesiredApp/askless-flutter-client/blob/master/README.md)
-*  [Getting Started (JavaScript client)](https://github.com/DesiredApp/askless-javascript-client/blob/master/README.md)
+*  [Getting Started (Flutter client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md)
+*  [Getting Started (JavaScript client)](https://github.com/WiseTap/askless-javascript-client/blob/master/README.md)
 *  [chat (example)](example/chat-js): Chat between the colors blue and green.
 *  [catalog (example)](example/catalog-ts)
 
@@ -118,7 +118,7 @@ It will be something like:
 
     192.168.X.X
 
-9 - Configure the [client side in Flutter.](https://github.com/DesiredApp/askless-flutter-client) 
+9 - Configure the [client side in Flutter.](https://github.com/WiseTap/askless-flutter-client) 
 
 ## Issues
 

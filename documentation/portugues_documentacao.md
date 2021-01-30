@@ -3,13 +3,13 @@
   :checkered_flag: [English (Inglês)](english_documentation.md)
 
   Documentação do servidor em Node.js. 
-  [Clique aqui](https://github.com/DesiredApp/askless-flutter-client/blob/master/README_PORTUGUES.md) 
+  [Clique aqui](https://github.com/WiseTap/askless-flutter-client/blob/master/README_PORTUGUES.md) 
   para acessar o cliente em Flutter.
 
   ## Material para referência
   *  [Começando](README.md): Referente ao servidor em Node.js.
-  *  [Começando (cliente em Flutter)](https://github.com/DesiredApp/askless-flutter-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
-  *  [Começando (cliente JavaScript)](https://github.com/DesiredApp/askless-javascript-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
+  *  [Começando (cliente em Flutter)](https://github.com/WiseTap/askless-flutter-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
+  *  [Começando (cliente JavaScript)](https://github.com/WiseTap/askless-javascript-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
   *  [chat (exemplo)](example/chat-js): Troca de mensagens instantâneas entre as cores azul e verde.
   *  [catalog (exemplo)](example/catalog-ts): Usuários alterando e removendo produtos de um catálogo.
 

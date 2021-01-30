@@ -3,12 +3,12 @@
   :checkered_flag: [Português (Portuguese)](portugues_documentacao.md)
  
   Documentation of the server side in Node.js. 
-  [Click here](https://github.com/DesiredApp/askless-flutter-client) 
+  [Click here](https://github.com/WiseTap/askless-flutter-client) 
   to access the client side in Flutter.
 
   ## Important links
   *  [Getting Started](README.md): Regarding to the server in Node.js.
-  *  [Getting Started (client)](https://github.com/DesiredApp/askless-flutter-client/blob/master/README.md): Regarding to the client side in Flutter.
+  *  [Getting Started (client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md): Regarding to the client side in Flutter.
   *  [chat (example)](example/chat-js): Chat between the colors blue and green.
   *  [catalog (example)](example/catalog-ts): Users adding and removing products from a catalog.
 

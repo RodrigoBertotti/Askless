@@ -473,7 +473,7 @@ export class AsklessServer {
 
   /**
    * Adds a new route in the server.
-   * {@link https://github.com/DesiredApp/askless/blob/master/documentation/english_documentation.md More info}.
+   * {@link https://github.com/WiseTap/askless/blob/master/documentation/english_documentation.md More info}.
    * */
   addRoute(params: Array<Route> | Route): void {
     if (!params) throw Error("context.route must not be null");
@@ -492,7 +492,7 @@ export class AsklessServer {
 
   /**
    * Adds a new `CREATE` route in the server.
-   * {@link https://github.com/DesiredApp/askless/blob/master/documentation/english_documentation.md More info}.
+   * {@link https://github.com/WiseTap/askless/blob/master/documentation/english_documentation.md More info}.
    * */
   addCreateRoute(params: CreateParams) {
     if (!params) throw Error("params must not be null");
@@ -504,7 +504,7 @@ export class AsklessServer {
 
   /**
    * Adds a new `READ` route in the server.
-   * {@link https://github.com/DesiredApp/askless/blob/master/documentation/english_documentation.md More info}.
+   * {@link https://github.com/WiseTap/askless/blob/master/documentation/english_documentation.md More info}.
    *
    * @returns {@link ReadRouteInRealtimeInstance}.
    * */
@@ -539,7 +539,7 @@ export class AsklessServer {
 
   /**
    * Adds a new `UPDATE` route in the server.
-   * {@link https://github.com/DesiredApp/askless/blob/master/documentation/english_documentation.md More info}.
+   * {@link https://github.com/WiseTap/askless/blob/master/documentation/english_documentation.md More info}.
    * */
   addUpdateRoute(params: UpdateParams) {
     if (!params) throw Error("params must not be null");
@@ -551,7 +551,7 @@ export class AsklessServer {
 
   /**
    * Adds a new `DELETE` route in the server.
-   * {@link https://github.com/DesiredApp/askless/blob/master/documentation/english_documentation.md More info}.
+   * {@link https://github.com/WiseTap/askless/blob/master/documentation/english_documentation.md More info}.
    * */
   addDeleteRoute(params: DeleteParams) {
     if (!params) throw Error("params must not be null");

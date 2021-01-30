@@ -55,6 +55,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/DesiredApp/askless.git"
+    "url": "git://github.com/WiseTap/askless.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WiseTap/askless/issues"
+  },
+  "homepage": "https://github.com/WiseTap/askless#readme",
+  "directories": {
+    "example": "example"
   }
 }
