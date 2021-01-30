@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "AMD",
+    "target": "ES5",
+    "declaration": true,
+    "outDir": "dist/askless",
+    "moduleResolution": "node",
+    "stripInternal": true
+  },
+  "exclude": [
+    "node_modules",
+    "example",
+    "test"
+  ]
+}

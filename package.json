@@ -1,0 +1,60 @@
+{
+  "name": "askless",
+  "version": "1.0.0",
+  "description": "Framework that facilitates building servers for JavaScript and Flutter Apps",
+  "keywords": [
+    "flutter",
+    "web",
+    "stream",
+    "framework",
+    "api",
+    "server",
+    "websocket",
+    "backend",
+    "widget"
+  ],
+  "main": "dist/askless/index.js",
+  "types": "dist/askless/index.d.ts",
+  "scripts": {
+    "bundle-dev": "rimraf dist && tsc --outDir dist/temp && webpack --env.development && rimraf dist/temp",
+    "bundle-prod": "rimraf dist && tsc --outDir dist/temp && webpack --env.production && rimraf dist/temp",
+    "catalog-js": "npm run bundle-dev && node example/catalog-js/index.js",
+    "chat-js": "npm run bundle-dev && node example/chat-js/index.js",
+    "catalog-ts": "rimraf example/catalog-tscompiled && npm run bundle-dev && npx tsc example/catalog-ts/index.ts --outDir example/catalog-tscompiled && node example/catalog-tscompiled/index.js",
+    "tracking-ts": "rimraf example/tracking-tscompiled && npm run bundle-dev && npx tsc example/tracking-ts/index.ts --outDir example/tracking-tscompiled && node example/tracking-tscompiled/index.js",
+    "prepublish": "npm run-script bundle-prod",
+    "test": "tsc test/index.test.ts && node ./node_modules/mocha/bin/mocha"
+  },
+  "author": "Rodrigo João Bertotti <rodrigo@wisetap.dev>",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^7.3.0",
+    "bufferutil": "^4.0.2",
+    "utf-8-validate": "^5.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-syntax-flow": "^7.10.4",
+    "@babel/plugin-transform-reserved-words": "^7.10.4",
+    "@babel/plugin-transform-typescript": "^7.11.0",
+    "@babel/preset-env": "^7.11.5",
+    "@types/mocha": "^8.2.0",
+    "@types/node": "^14.0.13",
+    "@types/ws": "^7.2.5",
+    "babel-loader": "^8.1.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "esmify": "^2.1.1",
+    "mocha": "^8.2.1",
+    "nodemon": "^2.0.4",
+    "rimraf": "^3.0.2",
+    "ts-loader": "^8.0.4",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/DesiredApp/askless.git"
+  }
+}
