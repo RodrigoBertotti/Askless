@@ -9,9 +9,13 @@ export const environment = {
         name: "1.0.0",
         code: 1,
       },
+      {
+        name: "1.0.1",
+        code: 2,
+      },
       //TODO onupdate
     ],
-    current: 1, //TODO onupdate
+    current: 2, //TODO onupdate
   },
   webClient: {
     versions: [
