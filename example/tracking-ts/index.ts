@@ -16,7 +16,7 @@ server.addReadRoute({
     route: 'product/tracking-ts',
     read: async (context) => {
         context.respondSuccess({
-            output: trackingStatus
+            output: 'addReadRoute response: \"'+trackingStatus+"\""
         });
     },
 });
@@ -39,7 +39,7 @@ server.addCreateRoute({
 
 server.start();
 
-let kmRemaining = 1000000;
+let kmRemaining = 800;
 const kmRemainingTask = setInterval(() => {
     if(kmRemaining == 0){
         return clearInterval(kmRemainingTask);
@@ -50,4 +50,6 @@ const kmRemainingTask = setInterval(() => {
     server.notifyClients('product/tracking-ts', {
         output: trackingStatus
     });
-}, 1 * 1000);
+}, 2500);
+
+console.log('my local server url: '+server.localUrl);

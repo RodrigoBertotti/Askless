@@ -70,7 +70,7 @@ Consiste em um objeto que pode conter os campos:
    
  ##### `useDefaultLogger?:boolean` 
  
- Se `true`: o logger padrão será utilizado (opcional). 
+ Se `true`: o logger padrão será utilizado (opcional). Defina como `false` em um ambiente de produção. Padrão: `false`
  Exemplo:
  
      server.init({
@@ -81,7 +81,7 @@ Consiste em um objeto que pode conter os campos:
 
   ##### `customLogger`
   
-  Permite criar a própria implementação do logger (opcional).
+  Permite criar a própria implementação do logger (opcional). Deixe `null` em um ambiente de produção
         
     Tipo: `(message, level, additionalData?) => void`
         

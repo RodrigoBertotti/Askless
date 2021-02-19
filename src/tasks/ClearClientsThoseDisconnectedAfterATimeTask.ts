@@ -8,10 +8,7 @@ export class ClearRuntimeDataFromDisconnectedClientTask extends AbstractTimedTas
 
   run() {
     if (!this.server4Flutter?.clientMiddleware?.clients) {
-      this.server4Flutter.logger(
-        "ClearRuntimeDataFromDisconnectedClientTask this.server4Flutter?.clientMiddleware?.clients IS NULL",
-        "error"
-      );
+      this.server4Flutter.logger("ClearRuntimeDataFromDisconnectedClientTask this.server4Flutter?.clientMiddleware?.clients IS NULL", "error");
       return;
     }
     const clientsId_clientInfo = this.server4Flutter.clientMiddleware.clients.getAllClientsInfos();
@@ -29,11 +26,7 @@ export class ClearRuntimeDataFromDisconnectedClientTask extends AbstractTimedTas
             1000 <
           Date.now()
       ) {
-        this.server4Flutter.logger(
-          "Cleaning data from disconnected user " + clientId,
-          "debug",
-          clientInfo
-        );
+        this.server4Flutter.logger("Cleaning data from disconnected user " + clientId, "debug", clientInfo);
         this.server4Flutter.clientMiddleware.clients.deleteClientsInfos([
           clientId,
         ]);

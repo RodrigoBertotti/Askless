@@ -67,7 +67,7 @@
 
   ##### `useDefaultLogger?:boolean` 
  
-  If `true`: the default logger will be used (optional). 
+  If `true`: the default logger will be used (optional). Set to `false` on a production environment. Default: `false` 
   Example:
  
     server.init({
@@ -78,7 +78,7 @@
 
  ##### `customLogger`
  
- Allows the implementation of a custom logger (optional).
+ Allows the implementation of a custom logger (optional). Let it `null` on a production environment 
        
  Type: `(message, level, additionalData?) => void`
        

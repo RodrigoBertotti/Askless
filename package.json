@@ -1,6 +1,6 @@
 {
   "name": "askless",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Framework that facilitates building servers for JavaScript and Flutter Apps",
   "keywords": [
     "flutter",

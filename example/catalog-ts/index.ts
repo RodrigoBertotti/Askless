@@ -34,3 +34,4 @@ server.addRoute([
 
 server.start();
 
+console.log('my local server url: '+server.localUrl);

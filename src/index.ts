@@ -109,12 +109,11 @@ export interface IServerConfiguration {
    *
    *  <b> `useDefaultLogger?:boolean` </b>
    *
-   *  If `true`: the default logger will be used (optional).
-   *  Default: true
+   *  If `true`: the default logger will be used (optional). Set to `false` on a production environment. Default: `false`
    *
    *  <b> customLogger </b>
    *
-   *  Allows the implementation of a custom logger (optional).
+   *  Allows the implementation of a custom logger (optional). Let it `null` on a production environment
    *
    *  Type: `(message, level, additionalData?) => void`
    *
@@ -138,21 +137,7 @@ export interface IServerConfiguration {
     ///showAllLogs?:boolean,
 
     /**
-     * Allows the implementation of a custom logger (optional).
-     *
-     * @example
-     *      server.init({
-     *          logger: {
-     *              useDefaultLogger: true
-     *          },
-     *      });
-     *
-     * */
-    useDefaultLogger?: boolean;
-
-    /**
-     * If `true`: the default logger will be used (optional). <br>
-     * Default: true <br>
+     * If `true`: the default logger will be used (optional). Set to `false` on a production environment. Default: `false` <br>
      *
      * @example
      *      server.init({
@@ -162,6 +147,20 @@ export interface IServerConfiguration {
      *                      if(additionalData)
      *                          console.log(JSON.stringify(additionalData));
      *                  };
+     *          },
+     *      });
+     *
+     * */
+    useDefaultLogger?: boolean;
+
+
+    /**
+     * Allows the implementation of a custom logger (optional). Let it `null` on a production environment
+     *
+     * @example
+     *      server.init({
+     *          logger: {
+     *              useDefaultLogger: true
      *          },
      *      });
      *
@@ -277,7 +276,7 @@ export class ServerInternalImp {
       };
 
     this._logger = (message, level, additionalData?: Object) => {
-      if (config.logger?.useDefaultLogger || (!config.logger?.customLogger && config.logger?.useDefaultLogger==null)) {
+      if (config.logger?.useDefaultLogger) {
         console.log(level + ": " + message);
         if (additionalData)
           console.log(JSON.stringify(additionalData));
@@ -286,6 +285,22 @@ export class ServerInternalImp {
         config.logger.customLogger(message, level, additionalData);
       }
     };
+    if(config.logger?.useDefaultLogger){
+      this._logger('\n'+
+                  '****************************************************************************************\n' +
+                  '** WARNING: useDefaultLogger is \'true\', SET it to \'false\' on a production environment **\n' +
+                  '****************************************************************************************',
+          "warning"
+      );
+    }
+    if(config.logger?.customLogger){
+      this._logger( '\n' +
+          '*************************************************************************************************************************\n' +
+          '** WARNING: You are using a customLogger, data content can appear on the logs (logs with \'debug\' level shows it a lot) **\n' +
+          '*************************************************************************************************************************',
+          "warning"
+      );
+    }
   }
 
   init(config: IServerConfiguration) {
@@ -305,6 +320,10 @@ export class ServerInternalImp {
     return this._logger(message, level, additionalData);
   }
 
+  get localUrl () : String {
+    return 'ws://'+myIPv4()+':'+this.wss.options.port.toString();
+  }
+
   start(): void {
     if (this.started) {
       console.error("Server4Flutter was already started");
@@ -316,10 +335,7 @@ export class ServerInternalImp {
 
     this.clientMiddleware.start();
 
-    this.logger(
-      "Server started on " + myIPv4()+':'+this.wss.options.port.toString(),
-      "info"
-    );
+    this.logger("Server started on " + this.localUrl, "info");
 
     this.sendMessageToClientAgainTask.start(
       this.config["intervalInSecondsServerSendSameMessage"] * 1000
@@ -366,14 +382,13 @@ export class ServerInternalImp {
   }
 
   getConnectionConfiguration(clientType:'flutter'|'javascript') {
-    const serverVersion = environment.server.versions.find(
-      (v) => v.name == environment.server.current
-    );
     let clientVersionCodeSupported;
     if(clientType==="javascript"){
-      clientVersionCodeSupported = serverVersion.clientVersionCodeSupported.web;
-    }else{ //clientType == 'flutter' or clientType == null
-      clientVersionCodeSupported = serverVersion.clientVersionCodeSupported.flutter;
+      clientVersionCodeSupported = environment.server.clientVersionCodeSupported.javascript;
+    }else if(clientType == 'flutter' || clientType == null){
+      clientVersionCodeSupported = environment.server.clientVersionCodeSupported.flutter;
+    }else{
+      throw Error("Invalid clientType: "+clientType);
     }
 
     return {
@@ -391,7 +406,7 @@ export class ServerInternalImp {
         "reconnectClientAfterSecondsWithoutServerPong"
       ],
       isFromServer: true,
-      serverVersion: serverVersion.name,
+      serverVersion: environment.server.name,
       clientVersionCodeSupported: {
         lessThanOrEqual: clientVersionCodeSupported.lessThanOrEqual,
         moreThanOrEqual: clientVersionCodeSupported.moreThanOrEqual,
@@ -424,6 +439,10 @@ export class AsklessServer {
     if (this.server4Flutter.allRoutes == null)
       throw Error("You need to set the routes first");
     this.server4Flutter.start();
+  }
+
+  get localUrl () : String {
+    return this.server4Flutter.localUrl;
   }
 
   /**
@@ -574,11 +593,7 @@ export class AsklessServer {
         .getClientInfo(ownClientId)
         .doWsDisconnect();
     } catch (e) {
-      this.server4Flutter.logger(
-        "Could not disconnect the client " + ownClientId,
-        "error",
-        e.stack
-      );
+      this.server4Flutter.logger("Could not disconnect the client " + ownClientId, "error", e.stack);
     }
   }
 }

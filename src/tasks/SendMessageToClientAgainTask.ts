@@ -11,10 +11,7 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
   run() {
     const clientsId_clientInfo = this.server4Flutter?.clientMiddleware?.clients?.getAllClientsInfos();
     if (!this.server4Flutter?.wss) {
-      this.server4Flutter.logger(
-        "SendMessageToClientAgainTask: this.server4Flutter?.clientMiddleware?.clients?.getAllClientsInfos() IS NULL",
-        "error"
-      );
+      this.server4Flutter.logger("SendMessageToClientAgainTask: this.server4Flutter?.clientMiddleware?.clients?.getAllClientsInfos() IS NULL", "error");
       return;
     }
     for (let clientId in clientsId_clientInfo) {

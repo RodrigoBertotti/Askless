@@ -12,18 +12,12 @@ export class DisconnectClientsWhoDidntPingTask extends AbstractTimedTask {
 
   run() {
     if (!this.server4Flutter?.wss) {
-      this.server4Flutter.logger(
-        "DisconnectClientsWhoDidntPingTask: this.server4Flutter?.wss IS NULL",
-        "error"
-      );
+      this.server4Flutter.logger("DisconnectClientsWhoDidntPingTask: this.server4Flutter?.wss IS NULL", "error");
       return;
     }
     this.server4Flutter.wss.clients.forEach((ws) => {
       if (ws[ws_isAlive] == false) {
-        this.server4Flutter.logger(
-          "Disconnecting user " + ws[ws_clientId] + " because he didn't ping",
-          "debug"
-        );
+        this.server4Flutter.logger("Disconnecting user " + ws[ws_clientId] + " because he didn't ping", "debug");
         return ws.terminate();
       }
       ws[ws_isAlive] = false;

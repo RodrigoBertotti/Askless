@@ -35,10 +35,7 @@ export class ClientMiddleware {
   start() {
     const self = this;
     this.server4Flutter.wss.on("connection", (ws) => {
-      self.server4Flutter.logger(
-        'new client connected, sending "welcome"',
-        "debug"
-      );
+      self.server4Flutter.logger('new client connected, sending "welcome"', "debug");
 
       ws.send("welcome");
 
@@ -118,20 +115,12 @@ export class ClientMiddleware {
 
       ws.on("error", function (_, err) {
         // _ is websocket, but it doesn't have the clientId field
-        self.server4Flutter.logger(
-          "websocket error: " + ws + " " + err.toString(),
-          "error",
-            {err}
-        );
+        self.server4Flutter.logger("websocket error: " + ws + " " + err.toString(), "error", {err});
       });
 
       ws.on("close", function (_, code, reason) {
         // _ is websocket, but it doesn't have the clientId field
-        self.server4Flutter.logger(
-          "websocket close: " + ws + " " + JSON.stringify(code) + " " + JSON.stringify(reason),
-          "debug",
-            code
-        );
+        self.server4Flutter.logger("websocket close: " + ws + " " + JSON.stringify(code) + " " + JSON.stringify(reason), "debug", code);
         self.clients.getClientInfo(ws[ws_clientId])?.onClose?.();
       });
     });
@@ -178,25 +167,14 @@ export class ClientMiddleware {
           onClientFailsToReceive: onClientFailsToReceive,
         });
 
-      this.server4Flutter.logger(
-        "Sending message to client",
-        "debug",
-        sendData
-      );
+      this.server4Flutter.logger("Sending message to client", "debug", sendData);
 
       if (clientInfo.sendMessage)
         clientInfo.sendMessage(JSON.stringify(sendData));
       else
-        this.server4Flutter.logger(
-          "Message not sent, waiting the client connect again...",
-          "debug",
-          sendData
-        );
+        this.server4Flutter.logger("Message not sent, waiting the client connect again...", "debug", sendData);
     } catch (e) {
-      this.server4Flutter.logger("assertSendDataToClient error", "error", {
-        stack: e.stack,
-        sendData,
-      });
+      this.server4Flutter.logger("assertSendDataToClient error", "error", {stack: e.stack, sendData,});
     }
   }
 }

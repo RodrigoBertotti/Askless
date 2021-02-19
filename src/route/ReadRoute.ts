@@ -368,10 +368,7 @@ abstract class _ReadRoute {
   async _notifyClientsAsync(
     notify?: NotifyClientsParams
   ): Promise<void> {
-    this.server4Flutter.logger(
-      "notifyClients -> started " + notify.output + " " + this.route,
-      "debug"
-    );
+    this.server4Flutter.logger("notifyClients -> started " + notify.output + " " + this.route, "debug");
 
     if (
       notify &&
@@ -388,10 +385,7 @@ abstract class _ReadRoute {
       if(clientId==null) //TODO: analisar porque está vindo aqui nulo, será que o delete não está funcionando direito?
         continue;
 
-      this.server4Flutter.logger(
-        "notifyClients -> client " + clientId,
-        "debug"
-      );
+      this.server4Flutter.logger("notifyClients -> client " + clientId, "debug");
       if (!clientId_info.hasOwnProperty(clientId)) {
         continue;
       }
@@ -400,11 +394,7 @@ abstract class _ReadRoute {
         notify.sendToSpecificClientsIds &&
         !notify.sendToSpecificClientsIds.includes(clientId)
       ) {
-        this.server4Flutter.logger(
-          "notifyClients -> Ignoring client because not informed on sendToSpecificClientsIds" +
-            clientId,
-          "debug"
-        );
+        this.server4Flutter.logger("notifyClients -> Ignoring client because not informed on sendToSpecificClientsIds" + clientId, "debug");
         continue;
       }
 
@@ -412,23 +402,11 @@ abstract class _ReadRoute {
       const routeClientListeningByThisClient = clientInfo.routesBeingListen.find((route) => route.route == this.route);
 
       if (routeClientListeningByThisClient == null) {
-        this.server4Flutter.logger(
-          "notifyClients -> client " +
-            clientId +
-            " is not listening to " +
-            this.route,
-          "debug"
-        );
+        this.server4Flutter.logger("notifyClients -> client " + clientId + " is not listening to " + this.route, "debug");
         continue;
       }
 
-      this.server4Flutter.logger(
-        "notifyClients -> " +
-          clientId +
-          " listen to: " +
-          clientInfo.routesBeingListen.length,
-        "debug"
-      );
+      this.server4Flutter.logger("notifyClients -> " + clientId + " listen to: " + clientInfo.routesBeingListen.length, "debug");
 
       // noinspection PointlessBooleanExpressionJS
       const response: RespondSuccess | RespondError =
@@ -454,10 +432,7 @@ abstract class _ReadRoute {
         );
 
       if (response instanceof RespondSuccess) {
-        this.server4Flutter.logger(
-          "notifyClients -> Notifying client " + clientId,
-          "debug"
-        );
+        this.server4Flutter.logger("notifyClients -> Notifying client " + clientId, "debug");
 
         const notifyClientOrNot =
           (await this.realtimeOutputHandler({
@@ -478,13 +453,7 @@ abstract class _ReadRoute {
           notifyClientOrNot.notifyThisClient != null &&
           notifyClientOrNot.notifyThisClient == false
         ) {
-          this.server4Flutter.logger(
-            this.route +
-              ' - Client "' +
-              clientId +
-              '" will not receive notification, because realtimeOutputHandler',
-            notify && notify.sendToSpecificClientsIds ? "warning" : "debug"
-          );
+          this.server4Flutter.logger(this.route + ' - Client "' + clientId + '" will not receive notification, because realtimeOutputHandler', notify && notify.sendToSpecificClientsIds ? "warning" : "debug");
           return;
         }
 
@@ -516,13 +485,7 @@ abstract class _ReadRoute {
           }
         );
       } else {
-        this.server4Flutter.logger(
-          "notifyClients -> " +
-            this.route +
-            " could not send the data, because read failed, try passing the output as parameter on notifyClients method",
-          "error",
-          response
-        );
+        this.server4Flutter.logger("notifyClients -> " + this.route + " could not send the data, because read failed, try passing the output as parameter on notifyClients method", "error", response);
       }
     }
 
@@ -560,11 +523,7 @@ abstract class _ReadRoute {
           self.server4Flutter.logger("listen: READ error", "error", output);
 
           if (output.code == RespondErrorCode.PERMISSION_DENIED) {
-            self.server4Flutter.logger(
-              "listen: the error is PERMISSION_DENIED, calling stopListening...",
-              "error",
-              output
-            );
+            self.server4Flutter.logger("listen: the error is PERMISSION_DENIED, calling stopListening...", "error", output);
             self.stopListening(clientId, listenId, self.route);
             successAndNowIsListening = false;
             self.server4Flutter.clientMiddleware.assertSendDataToClient(
@@ -606,11 +565,7 @@ abstract class _ReadRoute {
             ownClientId: Utils.getOwnClientId(clientId),
           });
         else
-          self.server4Flutter.logger(
-            "onClientStartsListening not called successAndNowIsListening : " +
-              successAndNowIsListening.toString(),
-            self.onClientStartsListening ? "error" : "debug"
-          );
+          self.server4Flutter.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), self.onClientStartsListening ? "error" : "debug");
 
         resolve(successAndNowIsListening ? listenId : null);
       };

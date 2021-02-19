@@ -59,12 +59,7 @@ export class ReceiveMessageHandler {
           if (ws) {
             ws.send(message);
           } else {
-            this.internalServerImp.logger(
-              "ClientMiddleware: ws null: the client " +
-                ws[ws_clientId] +
-                " is not connected anymore",
-              "error"
-            );
+            this.internalServerImp.logger("ClientMiddleware: ws null: the client " + ws[ws_clientId] + " is not connected anymore", "error");
           }
         } catch (e) {
           this.internalServerImp.logger("ClientMiddleware", "error", e);
@@ -72,10 +67,7 @@ export class ReceiveMessageHandler {
       };
 
       clientInfo.onClose = () => {
-        this.internalServerImp.logger(
-          "onClose websocket " + ws[ws_clientId],
-          "debug"
-        );
+        this.internalServerImp.logger("onClose websocket " + ws[ws_clientId], "debug");
         //Apaga apenas as informações relacionadas a conexão, não apaga mensagens pendentes
         //As respostas serão deixadas ainda, serão apagadas depois com o clientId_disconnectedAt
         clientInfo.sendMessage = null;
@@ -84,10 +76,7 @@ export class ReceiveMessageHandler {
         clientInfo.disconnectedAt = Date.now();
       };
       clientInfo.doWsDisconnect = () => {
-        this.internalServerImp.logger(
-          "doWsDisconnect " + ws[ws_clientId],
-          "debug"
-        );
+        this.internalServerImp.logger("doWsDisconnect " + ws[ws_clientId], "debug");
         ws.close();
       };
 
@@ -114,10 +103,7 @@ export class ReceiveMessageHandler {
     ownClientIdOrNull = Utils.getOwnClientId(ws[ws_clientId]);
     if (ws[ws_clientId] == null) {
       //clientId = _input['clientId'];
-      this.internalServerImp.logger(
-        "clientId is undefined: " + JSON.stringify(_input),
-        "debug"
-      );
+      this.internalServerImp.logger("clientId is undefined: " + JSON.stringify(_input), "debug");
       return;
     }
     const clientInfo = this.internalServerImp.clientMiddleware.clients.getClientInfo(ws[ws_clientId]);
@@ -130,11 +116,7 @@ export class ReceiveMessageHandler {
       _input[ConfigureConnectionRequestCli.type] == null
     ) {
       //Is not possible to execute any operation BEFORE setting the headers
-      this.internalServerImp.logger(
-        "Is not possible to execute any operation BEFORE setting the headers",
-        "error",
-          _input
-      );
+      this.internalServerImp.logger("Is not possible to execute any operation BEFORE setting the headers", "error", _input);
       return;
     }
 
@@ -152,13 +134,7 @@ export class ReceiveMessageHandler {
       (c: LastClientRequest) => c.clientRequestId == _input.clientRequestId
     );
     if (requestAlreadyReceivedFromClientBefore) {
-      this.internalServerImp.logger(
-        "handleClientRequestInput: request already receipt: " +
-          _input.clientRequestId +
-          " from clientId=" +
-          ws[ws_clientId],
-        "debug"
-      );
+      this.internalServerImp.logger("handleClientRequestInput: request already receipt: " + _input.clientRequestId + " from clientId=" + ws[ws_clientId], "debug");
       requestAlreadyReceivedFromClientBefore.requestReceivedAt = Date.now();
       return;
     }
@@ -168,14 +144,7 @@ export class ReceiveMessageHandler {
 
     const NOW = Date.now();
     if (clientInfo.lastClientRequestList.length > 100) {
-      this.internalServerImp.logger(
-        "handleClientRequestInput: Start of removing unnecessary info's of user " +
-          clientInfo.clientId +
-          "... (" +
-          clientInfo.lastClientRequestList.length +
-          ")",
-        "debug"
-      );
+      this.internalServerImp.logger("handleClientRequestInput: Start of removing unnecessary info's of user " + clientInfo.clientId + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
       const remove = Array<LastClientRequest>();
       for (
         let i = clientInfo.lastClientRequestList.length - 1;
@@ -193,14 +162,7 @@ export class ReceiveMessageHandler {
       clientInfo.lastClientRequestList = clientInfo.lastClientRequestList.filter(
         (req) => req && !remove.includes(req)
       );
-      this.internalServerImp.logger(
-        "handleClientRequestInput: End of removing unnecessary info's of user " +
-          clientInfo.clientId +
-          "... (" +
-          clientInfo.lastClientRequestList.length +
-          ")",
-        "debug"
-      );
+      this.internalServerImp.logger("handleClientRequestInput: End of removing unnecessary info's of user " + clientInfo.clientId + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
     }
 
     // console.log('-------------- INPUT ---------------');
@@ -255,14 +217,7 @@ export class ReceiveMessageHandler {
 
     if (response instanceof RespondError) {
       if (response.code == null)
-        this.internalServerImp.logger(
-          "respondWithError: read in " +
-            data.route +
-            "/" +
-            data.route +
-            " is null",
-          "warning"
-        );
+        this.internalServerImp.logger("respondWithError: read in " + data.route + "/" + data.route + " is null", "warning");
       service.server4Flutter.clientMiddleware.assertSendDataToClient(
         clientId,
         new ResponseCli(data.clientRequestId, null, response),
@@ -273,14 +228,7 @@ export class ReceiveMessageHandler {
     } else {
       response = response as RespondSuccess;
       if (response == null || response.output == null)
-        this.internalServerImp.logger(
-          "respondWithSuccess: read in " +
-            data.route +
-            "/" +
-            data.route +
-            " is null",
-          "warning"
-        );
+        this.internalServerImp.logger("respondWithSuccess: read in " + data.route + "/" + data.route + " is null", "warning");
       service.server4Flutter.clientMiddleware.assertSendDataToClient(
         clientId,
         new ResponseCli(data.clientRequestId, response?.output),
@@ -418,10 +366,7 @@ export class ReceiveMessageHandler {
     if (clientInfoServer.sendMessage != null)
       clientInfoServer.sendMessage("pong");
     else
-      this.internalServerImp.logger(
-        'handlePingFromClient: Could not send the "pong" to client',
-        "error"
-      );
+      this.internalServerImp.logger('handlePingFromClient: Could not send the "pong" to client', "error");
 
     const routesThatClientDoesntListenAnymoreAndCanBeRemovedFromServer = clientInfoServer.routesBeingListen.filter(
       (routeBeingListen) => {
