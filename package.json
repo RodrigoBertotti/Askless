@@ -22,6 +22,7 @@
     "chat-js": "npm run bundle-dev && node example/chat-js/index.js",
     "catalog-ts": "rimraf example/catalog-tscompiled && npm run bundle-dev && npx tsc example/catalog-ts/index.ts --outDir example/catalog-tscompiled && node example/catalog-tscompiled/index.js",
     "tracking-ts": "rimraf example/tracking-tscompiled && npm run bundle-dev && npx tsc example/tracking-ts/index.ts --outDir example/tracking-tscompiled && node example/tracking-tscompiled/index.js",
+    "tracking-ts-fast": "node example/tracking-tscompiled/index.js",
     "prepublish": "npm run-script bundle-prod",
     "test": "tsc test/index.test.ts && node ./node_modules/mocha/bin/mocha"
   },

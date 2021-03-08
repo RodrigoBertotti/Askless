@@ -27,13 +27,13 @@ allowing to:
 
 This is the server side in Node.js, check also the
 [Flutter client](https://github.com/WiseTap/askless-flutter-client) 
-or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-javascript-client).
+or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-js-client).
 
 
 ## Important links
 *  [Server documentation](documentation/english_documentation.md)
 *  [Getting Started (Flutter client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md)
-*  [Getting Started (JavaScript client)](https://github.com/WiseTap/askless-javascript-client/blob/master/README.md)
+*  [Getting Started (JavaScript client)](https://github.com/WiseTap/askless-js-client/blob/master/README.md)
 *  [chat (example)](example/chat-js): Chat between the colors blue and green.
 *  [catalog (example)](example/catalog-ts)
 
@@ -52,7 +52,7 @@ or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-java
     const server = new askless.AsklessServer();
     
     server.init({
-        projectName: 'tracking',
+        projectName: 'tracking-ts',
         wsOptions : {
             port : 3000
         }
@@ -113,10 +113,11 @@ or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-java
         });
     }, 3 * 1000);
 
-8 - Check what's your IPV4 address in the machine that your server is running. 
-It will be something like:
-
-    192.168.X.X
+8 - Discover your server url on your local network:
+    
+    console.log(server.localUrl) 
+    
+Run the server, it will print something like: `ws://192.168.?.?:3000`
 
 9 - Configure the [client side in Flutter.](https://github.com/WiseTap/askless-flutter-client) 
 

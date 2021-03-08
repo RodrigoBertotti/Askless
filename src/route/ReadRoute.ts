@@ -500,12 +500,16 @@ abstract class _ReadRoute {
     headers: object,
     listenId: string
   ): Promise<any> {
+    // if(this.clientIsAlreadyListeningTo(listenId)){
+    //   this.server4Flutter.logger("server is already server the client listening request about listenId:"+listenId+" & clientRequestId: "+clientRequestId, "debug");
+    //   return;
+    // }
     const self = this;
     return new Promise(async (resolve, reject) => {
       self.stopListening(clientId, listenId, self.route);
 
       const clientInfo = self.server4Flutter.clientMiddleware.clients.getClientInfo(clientId);
-      const start = new Date().getTime();
+      // const start = new Date().getTime();
 
       clientInfo.routesBeingListen.push({
         clientId: clientId,
@@ -514,11 +518,11 @@ abstract class _ReadRoute {
         query: query,
       });
 
-      const WAIT = 1000; //After the listen started, wait one second to send the initial data
+      // const WAIT = 1000; //After the listen started, wait one second to send the initial data
       const callback = async (output, error: boolean) => {
-        const difference = new Date().getTime() - start;
+        // const difference = new Date().getTime() - start;
         let successAndNowIsListening: boolean = true;
-        if (difference < WAIT) await Utils.delay(WAIT - difference);
+        // if (difference < WAIT) await Utils.delay(WAIT - difference);
         if (error) {
           self.server4Flutter.logger("listen: READ error", "error", output);
 

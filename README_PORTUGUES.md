@@ -26,12 +26,12 @@ Framework que facilita criar servidores para aplicativos em Flutter e JavaScript
 - :lock: aceitar e recusar tentativas de conexão
 
 Este é lado servidor em Node.js, confira também o [cliente em Flutter](https://github.com/WiseTap/askless-flutter-client) 
-ou se preferir o [cliente JavaScript](https://github.com/WiseTap/askless-javascript-client).
+ou se preferir o [cliente JavaScript](https://github.com/WiseTap/askless-js-client).
 
 ## Material para referência
 *  [Documentação do servidor](documentation/portugues_documentacao.md)
 *  [Começando (cliente em Flutter)](https://github.com/WiseTap/askless-flutter-client/blob/master/README_PORTUGUES.md)
-*  [Começando (cliente JavaScript)](https://github.com/WiseTap/askless-javascript-client/blob/master/README_PORTUGUES.md)
+*  [Começando (cliente JavaScript)](https://github.com/WiseTap/askless-js-client/blob/master/README_PORTUGUES.md)
 *  [chat (exemplo)](example/chat-js): Troca de mensagens instantâneas entre as cores azul e verde.
 *  [catalog (exemplo)](example/catalog-ts): Usuários alterando e removendo produtos de um catálogo.
 
@@ -50,7 +50,7 @@ ou se preferir o [cliente JavaScript](https://github.com/WiseTap/askless-javascr
     const server = new askless.AsklessServer();
     
     server.init({
-        projectName: 'tracking',
+        projectName: 'tracking-ts',
         wsOptions : {
             port : 3000
         }
@@ -108,9 +108,11 @@ ou se preferir o [cliente JavaScript](https://github.com/WiseTap/askless-javascr
         });
     }, 3 * 1000);
 
-8 - Verifique qual é o endereço IPV4 que o servidor está rodando. Algo como:
+8 - Verifique em qual a url do servidor na sua rede local:
 
-    192.168.X.X
+    console.log(server.localUrl)
+
+Execute o servidor, o resultado será algo do tipo: `ws://192.168.?.?:3000`. 
 
 9 - Configure o [lado cliente em Flutter.](https://github.com/WiseTap/askless-flutter-client/blob/master/README_PORTUGUES.md) 
 

@@ -7,7 +7,7 @@ const allMessages = [];
 server.init({
     projectName: 'chat-js',
     sendInternalErrorsToClient: !isProduction,
-    logger: {
+    logger: isProduction ? null : { // DO NOT DO SHOW ASKLESS LOGS ON THE CONSOLE ON A PRODUCTION ENVIRONMENT
         customLogger: (message, level, additionalData) =>{
             console.log('> '+level +': '+message);
             if(additionalData){
@@ -48,7 +48,7 @@ const readRouteInRealtime = server.addReadRoute({
         server.notifyClients('message', {
             output: [
                 {
-                    'text': 'server said: '+context.ownClientId+' closed the chat-js screen',
+                    'text': 'server said: '+context.ownClientId+' has been disconnected from the chat and didn\'t connect again',
                     'origin': context.ownClientId === 'blue' ? 'green' : 'blue'
                 } //Send array of messages with one item only
             ],

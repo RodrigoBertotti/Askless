@@ -19,10 +19,10 @@ function validateToken (ownClientId, headers) {
 }
 
 server.init({
-    projectName: 'catalog-javascript-client',
+    projectName: 'catalog',
     grantConnection: SimpleCheckBearerExample.validateToken,
     sendInternalErrorsToClient: !isProduction,
-    logger: {
+    logger: isProduction ? null : { // DO NOT DO SHOW ASKLESS LOGS ON THE CONSOLE ON A PRODUCTION ENVIRONMENT
         customLogger: (message, level, additionalData) =>{
             console.log(level +': '+message);
             if(additionalData){

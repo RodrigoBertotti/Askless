@@ -6,7 +6,7 @@ const server = new AsklessServer();
 server.init({
     projectName: 'tracking-ts',
     wsOptions : {
-        port : 3000
+        port : 3000,
     },
 });
 
@@ -16,7 +16,7 @@ server.addReadRoute({
     route: 'product/tracking-ts',
     read: async (context) => {
         context.respondSuccess({
-            output: 'addReadRoute response: \"'+trackingStatus+"\""
+            output: 'addReadRoute successfully added'
         });
     },
 });

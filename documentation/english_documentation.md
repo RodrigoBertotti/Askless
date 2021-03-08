@@ -94,7 +94,7 @@
         },
     });
       
-<!-- askless-javascript-client & askless-flutter-client apontam para essa url # abaixo -->
+<!-- askless-js-client & askless-flutter-client apontam para essa url # abaixo -->
  #### `grantConnection`
  
  Accepts or deny a connection attempt (optional).

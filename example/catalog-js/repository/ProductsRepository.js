@@ -11,7 +11,7 @@ const route = require("../routes/ProductsRoute");class ProductsRepository {
             // noinspection JSIgnoredPromiseFromCall
             this.save(product);
         //},  1000);
-        },  60*1000);
+        },  10*1000);
     }
 
     async save(product){

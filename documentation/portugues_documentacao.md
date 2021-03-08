@@ -9,7 +9,7 @@
   ## Material para referência
   *  [Começando](README.md): Referente ao servidor em Node.js.
   *  [Começando (cliente em Flutter)](https://github.com/WiseTap/askless-flutter-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
-  *  [Começando (cliente JavaScript)](https://github.com/WiseTap/askless-javascript-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
+  *  [Começando (cliente JavaScript)](https://github.com/WiseTap/askless-js-client/blob/master/README_PORTUGUES.md): Referente ao cliente em Flutter.
   *  [chat (exemplo)](example/chat-js): Troca de mensagens instantâneas entre as cores azul e verde.
   *  [catalog (exemplo)](example/catalog-ts): Usuários alterando e removendo produtos de um catálogo.
 
@@ -97,7 +97,7 @@ Consiste em um objeto que pode conter os campos:
         },
     });
 
-<!-- askless-javascript-client & askless-flutter-client apontam para essa url # abaixo -->
+<!-- askless-js-client & askless-flutter-client apontam para essa url # abaixo -->
 #### `grantConnection` 
  
  Aceita ou recusa uma tentativa de conexão (opcional). 
