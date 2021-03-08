@@ -87,6 +87,14 @@ class DeleteProductRoute extends askless.DeleteRoute {
             return;
         }
         const product = await productsRepository.delete(context.query['id']);
+        if(!product){
+            context.respondError({
+                code: "NOT_FOUND",
+                description: "Product "+context.query['id']+ " doesn't exist",
+            })
+            return;
+        }
+
         context.respondSuccess({
             output: product,
             onClientSuccessfullyReceives: () => console.log("_DeleteProduct: Client "+context.ownClientId+" received the response"),
