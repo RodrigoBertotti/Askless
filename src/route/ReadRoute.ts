@@ -410,7 +410,7 @@ abstract class _ReadRoute {
 
       this.server4Flutter.logger("notifyClients -> " + clientId + " listen to: " + clientInfo.routesBeingListen.length, "debug");
 
-      for(let r=0;r<routeClientListeningByThisClientArray.length;r++){ // this loop was created because of the uncommon cases where the same client implementation wait for multiples listening responses of the same route
+      for(let r=0;r<routeClientListeningByThisClientArray.length;r++){ // this loop was created because of the uncommon cases where the same client listening implementation (internal code, not interface code) is listening multiple times for the same response
         // noinspection PointlessBooleanExpressionJS
         const response: RespondSuccess | RespondError =
             !notify || notify.output == "RUN_READ_ONCE"
