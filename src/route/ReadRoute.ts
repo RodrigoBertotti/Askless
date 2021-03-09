@@ -399,93 +399,97 @@ abstract class _ReadRoute {
       }
 
       const clientInfo = clientId_info[clientId] as ClientInfo;
-      const routeClientListeningByThisClient = clientInfo.routesBeingListen.find((route) => route.route == this.route);
+      // Embora um cliente deva ouvir apenas uma rota, em alguns milissegundos ele pode estar ouvindo 2 vezes a mesma rota
+      // isso acontece por exemplo quando no exemplo do catalog o usuário muda a query muito rapidamente, ex: '' -> 'f' -> ''
+      const routeClientListeningByThisClientArray = clientInfo.routesBeingListen.filter((route) => route.route == this.route);
 
-      if (routeClientListeningByThisClient == null) {
+      if (!routeClientListeningByThisClientArray?.length) {
         this.server4Flutter.logger("notifyClients -> client " + clientId + " is not listening to " + this.route, "debug");
         continue;
       }
 
       this.server4Flutter.logger("notifyClients -> " + clientId + " listen to: " + clientInfo.routesBeingListen.length, "debug");
 
-      // noinspection PointlessBooleanExpressionJS
-      const response: RespondSuccess | RespondError =
-        !notify || notify.output == "RUN_READ_ONCE"
-          ? await this.readInternal({
-              headers: clientInfo.headers,
-              ownClientId: clientInfo.clientId,
-              query: routeClientListeningByThisClient.query,
-            })
-          : new RespondSuccess({
-              output: notify.output,
-            });
+      for(let r=0;r<routeClientListeningByThisClientArray.length;r++){ // this loop was created because of the uncommon cases where the same client implementation wait for multiples listening responses of the same route
+        // noinspection PointlessBooleanExpressionJS
+        const response: RespondSuccess | RespondError =
+            !notify || notify.output == "RUN_READ_ONCE"
+                ? await this.readInternal({
+                  headers: clientInfo.headers,
+                  ownClientId: clientInfo.clientId,
+                  query: routeClientListeningByThisClientArray[r].query,
+                })
+                : new RespondSuccess({
+                  output: notify.output,
+                });
 
-      if (
-        response == null ||
-        (!(response instanceof RespondError) &&
-          !(response instanceof RespondSuccess))
-      )
-        throw Error(
-          "response of read " +
-            this.route +
-            " must be an instance of Success or RespondError"
-        );
-
-      if (response instanceof RespondSuccess) {
-        this.server4Flutter.logger("notifyClients -> Notifying client " + clientId, "debug");
-
-        const notifyClientOrNot =
-          (await this.realtimeOutputHandler({
-            //Check if the client will receive the response
-            output: response.output,
-            query: routeClientListeningByThisClient.query,
-            ownClientId: Utils.getOwnClientId(clientId),
-            headers: this.server4Flutter.clientMiddleware.clients.getHeaders(clientId),
-          })) || ({} as RealtimeOutputHandlerResult); //<--- LINK_PROJECT_RealtimeOutputHandlerCHANGED: remover || ( {} as RealtimeOutputHandler)
-
-        if (notifyClientOrNot == null) {
-          //throw Error('The method realtimeOutputHandler of ' + this.route + ' must return a value');
-        }
-        if (notifyClientOrNot.constructor.name == "AsyncFunction") {
-          throw Error("realtimeOutputHandler must not be async because of performance issues");
-        }
         if (
-          notifyClientOrNot.notifyThisClient != null &&
-          notifyClientOrNot.notifyThisClient == false
-        ) {
-          this.server4Flutter.logger(this.route + ' - Client "' + clientId + '" will not receive notification, because realtimeOutputHandler', notify && notify.sendToSpecificClientsIds ? "warning" : "debug");
-          return;
-        }
+            response == null ||
+            (!(response instanceof RespondError) &&
+                !(response instanceof RespondSuccess))
+        )
+          throw Error(
+              "response of read " +
+              this.route +
+              " must be an instance of Success or RespondError"
+          );
 
-        const output =
-          notifyClientOrNot?.customOutput == null
-            ? response.output
-            : notifyClientOrNot.customOutput;
-        this.server4Flutter.clientMiddleware.assertSendDataToClient(
-          clientId,
-          new NewDataForListener(
-            output,
-            routeClientListeningByThisClient.listenId
-          ),
-          true,
-          () => {
-            if (notify && notify.onClientSuccessfullyReceives)
-              notify.onClientSuccessfullyReceives(clientId);
-            if (
-              notifyClientOrNot &&
-              notifyClientOrNot.onClientSuccessfullyReceives
-            )
-              notifyClientOrNot.onClientSuccessfullyReceives(clientId);
-          },
-          () => {
-            if (notify && notify.onClientFailsToReceive)
-              notify.onClientFailsToReceive(clientId);
-            if (notifyClientOrNot && notifyClientOrNot.onClientFailsToReceive)
-              notifyClientOrNot.onClientFailsToReceive(clientId);
+        if (response instanceof RespondSuccess) {
+          this.server4Flutter.logger("notifyClients -> Notifying client " + clientId, "debug");
+
+          const notifyClientOrNot =
+              (await this.realtimeOutputHandler({
+                //Check if the client will receive the response
+                output: response.output,
+                query: routeClientListeningByThisClientArray[r].query,
+                ownClientId: Utils.getOwnClientId(clientId),
+                headers: this.server4Flutter.clientMiddleware.clients.getHeaders(clientId),
+              })) || ({} as RealtimeOutputHandlerResult); //<--- LINK_PROJECT_RealtimeOutputHandlerCHANGED: remover || ( {} as RealtimeOutputHandler)
+
+          if (notifyClientOrNot == null) {
+            //throw Error('The method realtimeOutputHandler of ' + this.route + ' must return a value');
           }
-        );
-      } else {
-        this.server4Flutter.logger("notifyClients -> " + this.route + " could not send the data, because read failed, try passing the output as parameter on notifyClients method", "error", response);
+          if (notifyClientOrNot.constructor.name == "AsyncFunction") {
+            throw Error("realtimeOutputHandler must not be async because of performance issues");
+          }
+          if (
+              notifyClientOrNot.notifyThisClient != null &&
+              notifyClientOrNot.notifyThisClient == false
+          ) {
+            this.server4Flutter.logger(this.route + ' - Client "' + clientId + '" will not receive notification, because realtimeOutputHandler', notify && notify.sendToSpecificClientsIds ? "warning" : "debug");
+            return;
+          }
+
+          const output =
+              notifyClientOrNot?.customOutput == null
+                  ? response.output
+                  : notifyClientOrNot.customOutput;
+          this.server4Flutter.clientMiddleware.assertSendDataToClient(
+              clientId,
+              new NewDataForListener(
+                  output,
+                  routeClientListeningByThisClientArray[r].listenId
+              ),
+              true,
+              () => {
+                if (notify && notify.onClientSuccessfullyReceives)
+                  notify.onClientSuccessfullyReceives(clientId);
+                if (
+                    notifyClientOrNot &&
+                    notifyClientOrNot.onClientSuccessfullyReceives
+                )
+                  notifyClientOrNot.onClientSuccessfullyReceives(clientId);
+              },
+              () => {
+                if (notify && notify.onClientFailsToReceive)
+                  notify.onClientFailsToReceive(clientId);
+                if (notifyClientOrNot && notifyClientOrNot.onClientFailsToReceive)
+                  notifyClientOrNot.onClientFailsToReceive(clientId);
+              }
+          );
+        } else {
+          this.server4Flutter.logger("notifyClients -> " + this.route + " could not send the data, because read failed, try passing the output as parameter on notifyClients method", "error", response);
+        }
       }
     }
 
