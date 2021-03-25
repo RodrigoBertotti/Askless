@@ -6,7 +6,6 @@ const server = new askless.AsklessServer();
 
 const isProduction = false;
 
-
 const ownClientId_bearer = {
     1: 'Bearer abcd',
     2: 'Bearer efgh',
@@ -39,6 +38,7 @@ server.init({
 server.addRoute([
     routes.createProductRoute,
     routes.listAllProductsRoute,
+    routes.listAllProductsReversedRoute,
     routes.deleteProductRoute
 ]);
 

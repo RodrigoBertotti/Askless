@@ -2,7 +2,6 @@ const askless = require("../../../dist/askless");
 const productsRepository = require("../repository/ProductsRepository");
 
 
-
 class CreateProductRoute extends askless.CreateRoute {
     constructor() {super('product');}
 
@@ -28,7 +27,7 @@ class CreateProductRoute extends askless.CreateRoute {
 
 }
 
-class ListAllProductsRoute extends askless.ReadRoute { //Flutter Apps can listen to any READ method
+class ListAllProductsRoute extends askless.ReadRoute {
 
     constructor() {super('product/all');}
 
@@ -62,8 +61,46 @@ class ListAllProductsRoute extends askless.ReadRoute { //Flutter Apps can listen
         });
     }
 
+}
+
+
+class ListAllProductsReversedRoute extends askless.ReadRoute {
+
+    constructor() {super('product/all/reversed');}
+
+    //override
+    realtimeOutputHandler(context){
+        if (context.query != null && context.query['search'] != null) {
+            const search = context.query['search'].toString().trim().toLowerCase();
+            return {
+                notifyThisClient: true,
+                customOutput: context.output.filter(
+                    (product) => product.name.trim().toLowerCase().includes(search) || product.price.toString().trim().toLowerCase().includes(search)
+                ).reverse(),
+                onClientSuccessfullyReceives: (clientId) => console.log("Realtime _ReadAllProducts: Client "+clientId+" received realtime data"),
+                onClientFailsToReceive:  (clientId) => console.error("Realtime _ReadAllProducts: Client "+clientId+" didn\'t receive realtime data")
+            };
+        }
+
+        return {
+            customOutput: context.output.reverse(),
+            notifyThisClient: true,
+            onClientSuccessfullyReceives: (clientId) => console.log("Realtime _ReadAllProducts: Client "+clientId+" received realtime data"),
+            onClientFailsToReceive:  (clientId) => console.error("Realtime _ReadAllProducts: Client "+clientId+"  didn\'t receive realtime data")
+        };
+    }
+
+    //override
+    async read(context) {
+        context.respondSuccess({
+            output: await productsRepository.readList(context.query != null ? context.query['search'] : null).reverse(),
+            onClientSuccessfullyReceives: (clientId) => console.log("_ReadAllProducts: Client " + clientId + " received the response"),
+            onClientFailsToReceive: (clientId) => console.error("_ReadAllProducts: Client " + clientId + " didn\'t receive the response")
+        });
+    }
 
 }
+
 
 class DeleteProductRoute extends askless.DeleteRoute {
 
@@ -108,6 +145,8 @@ class DeleteProductRoute extends askless.DeleteRoute {
 
 module.exports.createProductRoute = new CreateProductRoute();
 module.exports.listAllProductsRoute = new ListAllProductsRoute();
+module.exports.listAllProductsReversedRoute = new ListAllProductsReversedRoute();
 module.exports.deleteProductRoute = new DeleteProductRoute();
+
 
 

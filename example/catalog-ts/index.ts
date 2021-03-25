@@ -1,6 +1,11 @@
 import {AsklessServer, RespondSuccess, RespondError} from "../../dist/askless";
 import {SimpleCheckBearerExample} from "./auth/SimpleCheckBearerExample";
-import {createProductRoute, deleteProductRoute, listAllProductsRoute} from "./routes/ProductsRoute";
+import {
+    createProductRoute,
+    deleteProductRoute,
+    listAllProductsReversedRoute,
+    listAllProductsRoute
+} from "./routes/ProductsRoute";
 
 
 const server = new AsklessServer();
@@ -27,7 +32,8 @@ server.init({
 server.addRoute([
     createProductRoute,
     listAllProductsRoute,
-    deleteProductRoute
+    listAllProductsReversedRoute,
+    deleteProductRoute,
 ]);
 
 server.start();

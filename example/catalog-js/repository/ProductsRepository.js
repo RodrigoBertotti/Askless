@@ -1,4 +1,6 @@
-const route = require("../routes/ProductsRoute");class ProductsRepository {
+const route = require("../routes/ProductsRoute");
+
+class ProductsRepository {
     id = 1;
     productsListFromDatabase = []; //Example
 
@@ -19,29 +21,32 @@ const route = require("../routes/ProductsRoute");class ProductsRepository {
         product.id = this.id++;
         this.productsListFromDatabase.push(product);
         await this._notify();
-        return product;
+        return Object.assign({}, product);
     }
 
     readList(search){
         console.log("Reading "+search);
         if(search == null || search.length === 0)
-            return this.productsListFromDatabase;
+            return Array.from(this.productsListFromDatabase);
         search = search.toLowerCase();
-        return this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search) || p.price.toString().includes(search));
+        return Array.from(this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search) || p.price.toString().includes(search)));
     }
 
     async delete(id){
         console.log("Removing "+id);
-        const product = this.productsListFromDatabase.find((product) => product.id == id);
+        const product = this.productsListFromDatabase.find((product) => product.id === id);
         this.productsListFromDatabase.splice(this.productsListFromDatabase.indexOf(product),1);
         await this._notify();
-        return product;
+        return Object.assign({}, product);
     }
 
     async _notify(){
         console.log("Notifying clients that server has "+this.productsListFromDatabase.length+" products");
         route.listAllProductsRoute.notifyClients({
-            output: this.productsListFromDatabase,
+            output: Array.from(this.productsListFromDatabase),
+        });
+        route.listAllProductsReversedRoute.notifyClients({
+            output: Array.from(this.productsListFromDatabase),
         });
     }
 }
