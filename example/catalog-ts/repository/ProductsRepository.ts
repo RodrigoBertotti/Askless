@@ -31,7 +31,7 @@ class ProductsRepository {
         if(search == null || search.length == 0)
             return this.productsListFromDatabase;
         search = search.toLowerCase();
-        return this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search));
+        return this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search) || p.price.toString().includes(search));
     }
 
     async delete(id:number) : Promise<Product>{

@@ -24,10 +24,10 @@ const route = require("../routes/ProductsRoute");class ProductsRepository {
 
     readList(search){
         console.log("Reading "+search);
-        if(search == null || search.length == 0)
+        if(search == null || search.length === 0)
             return this.productsListFromDatabase;
         search = search.toLowerCase();
-        return this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search));
+        return this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search) || p.price.toString().includes(search));
     }
 
     async delete(id){
