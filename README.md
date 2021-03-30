@@ -11,13 +11,13 @@ allowing to:
 
     - :computer: supports JavaScript clients: Web and Node.js
 
-    - :arrow_right_hook: automatically retry sending data in case of connectivity issues between the client and server
+    - :arrow_right_hook: it retries to send data automatically in case of connectivity issues between the client and the server
 
 - :pencil2: create your own CRUD operations with the database you like (**C**reate, **R**ead, **U**pdate and **D**elete)
 
 - :no_entry: restrict client access to CRUD operations
 
-- :mega: notify in real time clients who are listening for changes in a route, you can choose:
+- :mega: notify in real-time clients who are listening for changes in a route, you can choose:
 
     - :no_pedestrians: only specify clients will receive the data
         
