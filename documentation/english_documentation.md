@@ -47,7 +47,7 @@
 
   #### `projectName?:string`
 
-  Name for this project (optional). 
+  Name for this project. 
   If `!= null`: the field `projectName` on client side must have the same name (optional).
 
   #### `requestTimeoutInSeconds?:number` 

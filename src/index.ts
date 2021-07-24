@@ -73,7 +73,7 @@ export type Logger = (
  * @param sendInternalErrorsToClient If `true`: server internal errors can be sent to the client (optional). <br>
  * Keep as `false` when the server is running in production. Default: `false`.
  *
- * @param projectName Name for this project (optional). <br>
+ * @param projectName Name for this project. <br>
  * If `!= null`: the field `projectName` on client side must have the same name (optional).
  *
  * @param logger Allow you to customize the behavior of internal logs and enable/disable the default logger (optional).
