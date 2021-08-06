@@ -648,7 +648,7 @@ abstract class _ReadRoute {
     }
     remove.forEach(async (p) => {
       await this.onClientStopsListening({
-        route: route,
+        route: p.route,
         ownClientId: Utils.getOwnClientId(p.clientId),
       });
     });
