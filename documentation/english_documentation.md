@@ -7,8 +7,8 @@
   to access the client side in Flutter.
 
   ## Important links
-  *  [Getting Started](README.md): Regarding to the server in Node.js.
-  *  [Getting Started (client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md): Regarding to the client side in Flutter.
+  *  [Getting Started](README.md): Askless back-end server in Node.js.
+  *  [Getting Started (client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md): Regard to the client side in Flutter.
   *  [chat (example)](example/chat-js): Chat between the colors blue and green.
   *  [catalog (example)](example/catalog-ts): Users adding and removing products from a catalog.
 

@@ -4,24 +4,26 @@
 
 Framework que facilita criar servidores para aplicativos em Flutter e JavaScript possibilitando:
 
-- :handshake: realizar uma conexão websocket para troca de dados que: 
- 
-    - :vibration_mode: suporta integração com streams no cliente em Flutter
-   
-    - :computer: suporta clientes JavaScript: Web e Node.js
-  
-    - :arrow_right_hook: realiza o reenvio de dados em caso de instabilidade
+- :handshake: realizar uma conexão websocket para troca de dados que:
+
+  - :vibration_mode: suporta integração com streams no cliente em Flutter
+
+  - :computer: suporta clientes JavaScript: Web e Node.js
+
+  - :arrow_right_hook: realiza o reenvio de dados em caso de instabilidade
     da conexão do cliente
 
-- :pencil2: criar as próprias operações CRUD em qualquer banco de dados (**C**reate, **R**ead, **U**pdate e **D**elete)
+  - :label: trata múltiplas e idênticas requisições de `listen` vindas do mesmo cliente como uma só pelo servidor
+
+- :pencil2: criar as próprias operações CRUD com qualquer banco de dados que você preferir (**C**reate, **R**ead, **U**pdate e **D**elete)
 
 - :no_entry: restringir o acesso do cliente com as operações CRUD
 
 - :mega: notificar em tempo real clientes que estão ouvindo por mudanças de uma rota, podendo ser:
-    
-    - :no_pedestrians: apenas clientes específicos irão receber os dados
-    
-    - :heavy_check_mark: todos os clientes irão receber os dados
+
+  - :no_pedestrians: apenas clientes específicos irão receber os dados
+
+  - :heavy_check_mark: todos os clientes irão receber os dados
 
 - :lock: aceitar e recusar tentativas de conexão
 

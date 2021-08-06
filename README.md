@@ -5,24 +5,26 @@
 Framework that facilitates building servers for JavaScript and Flutter Apps
 allowing to:
 
-- :handshake: perform a websocket connection to exchange data that: 
- 
+- :handshake: perform a websocket connection to exchange data that:
+
     - :vibration_mode: supports streams on the client side in Flutter
 
     - :computer: supports JavaScript clients: Web and Node.js
 
     - :arrow_right_hook: it retries to send data automatically in case of connectivity issues between the client and the server
 
-- :pencil2: create your own CRUD operations with the database you like (**C**reate, **R**ead, **U**pdate and **D**elete)
+    - :label: handles multiples and identical `listen` requests from a client as a single one in the server
+
+- :pencil2: create your own CRUD operations with any database you like (**C**reate, **R**ead, **U**pdate and **D**elete)
 
 - :no_entry: restrict client access to CRUD operations
 
 - :mega: notify in real-time clients who are listening for changes in a route, you can choose:
 
     - :no_pedestrians: only specify clients will receive the data
-        
+
     - :heavy_check_mark: all clients will receive the data
-    
+
 - :lock: accept and deny connection attempts
 
 This is the server side in Node.js, check also the

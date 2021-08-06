@@ -16,7 +16,7 @@ server.addReadRoute({
     route: 'product/tracking-ts',
     read: async (context) => {
         context.respondSuccess({
-            output: 'addReadRoute successfully added'
+            output: trackingStatus
         });
     },
 });
