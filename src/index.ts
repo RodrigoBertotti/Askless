@@ -324,7 +324,7 @@ export class ServerInternalImp {
 
   start(): void {
     if (this.started) {
-      console.error("Server4Flutter was already started");
+      console.error("server was already started");
       return;
     }
     if (!this.config) throw Error("you need to call server.init(..) first");
@@ -417,14 +417,14 @@ export class ServerInternalImp {
 
 export class AsklessServer {
   /** @internal */
-  readonly server4Flutter: ServerInternalImp = new ServerInternalImp();
+  readonly server: ServerInternalImp = new ServerInternalImp();
 
   /**
    *  Initialize and configure the server.
    *  @param params {@link IServerConfiguration The server configuration}.
    * */
   init(params?: IServerConfiguration): void {
-    this.server4Flutter.init(params || {});
+    this.server.init(params || {});
   }
 
   /**
@@ -432,15 +432,15 @@ export class AsklessServer {
    * This method must be called after the server have been fully configured with `init`.
    */
   start(): void {
-    if (this.server4Flutter.config == null)
+    if (this.server.config == null)
       throw Error("You must call the method 'init' before 'start'");
-    if (this.server4Flutter.allRoutes == null)
+    if (this.server.allRoutes == null)
       throw Error("You need to set the routes first");
-    this.server4Flutter.start();
+    this.server.start();
   }
 
   get localUrl () : String {
-    return this.server4Flutter.localUrl;
+    return this.server.localUrl;
   }
 
   /**
@@ -448,7 +448,7 @@ export class AsklessServer {
    *  @param readRoute The name of the route.
    * */
   getReadRoute(readRoute: string): ReadRoute {
-    return this.server4Flutter.getReadRoute(readRoute);
+    return this.server.getReadRoute(readRoute);
   }
 
   /**
@@ -464,7 +464,7 @@ export class AsklessServer {
     | ReadRoute
     | UpdateRoute
     | DeleteRoute {
-    return this.server4Flutter.getRoute(route, requestType);
+    return this.server.getRoute(route, requestType);
   }
 
   /**
@@ -501,10 +501,10 @@ export class AsklessServer {
       throw Error("context.route must not be empty");
     routes.forEach((route) => {
       if (route instanceof ReadRoute)
-        route.server4Flutter = this.server4Flutter;
-      this.server4Flutter.allRoutes.push(route);
+        route.server = this.server;
+      this.server.allRoutes.push(route);
     });
-    this.server4Flutter.allRoutes.concat(routes);
+    this.server.allRoutes.concat(routes);
   }
 
   /**
@@ -548,7 +548,7 @@ export class AsklessServer {
               readRoute.notifyClients(notify);
               resolve();
             },
-            readRoute.server4Flutter ? 0 : 200
+            readRoute.server ? 0 : 200
           );
         });
       },
@@ -588,12 +588,12 @@ export class AsklessServer {
     if (ownClientId == null)
       throw Error("You cannot disconnect a client without an App generated ID");
     try {
-      const clientInfo:ClientInfo = this.server4Flutter.clientMiddleware.clients.getClientInfo(ownClientId);
+      const clientInfo:ClientInfo = this.server.clientMiddleware.clients.getClientInfo(ownClientId);
       if(clientInfo?.doWsDisconnect) {
         clientInfo.doWsDisconnect();
       }
     } catch (e) {
-      this.server4Flutter.logger("Could not disconnect the client " + ownClientId, "error", e.stack);
+      this.server.logger("Could not disconnect the client " + ownClientId, "error", e.stack);
     }
   }
 }

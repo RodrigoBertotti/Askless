@@ -257,7 +257,7 @@ abstract class _ReadRoute {
   public readonly requestType: CrudRequestType = CrudRequestType.READ;
 
   /** @internal */
-  public server4Flutter: ServerInternalImp;
+  public server: ServerInternalImp;
 
   protected constructor(public readonly route: string) {}
 
@@ -366,7 +366,7 @@ abstract class _ReadRoute {
   }
 
   async _notifyClientsAsync(notify?: NotifyClientsParams): Promise<void> {
-    this.server4Flutter.logger("notifyClients -> started " + (notify?.output??'') + " " + this.route, "debug");
+    this.server.logger("notifyClients -> started " + (notify?.output??'') + " " + this.route, "debug");
 
     if (
       notify &&
@@ -377,22 +377,18 @@ abstract class _ReadRoute {
         "notify.sendToSpecificClientsIds needs be null or an array with more than one element"
       );
 
-    const clientId_info = this.server4Flutter.clientMiddleware.clients.getAllClientsInfos();
+    const clientId_info = this.server.clientMiddleware.clients.getAllClientsInfos();
 
     for (let clientId in clientId_info) {
       if(clientId==null) //TODO: analisar porque está vindo aqui nulo, será que o delete não está funcionando direito?
         continue;
 
-      this.server4Flutter.logger("notifyClients -> client " + clientId, "debug");
+      this.server.logger("notifyClients -> client " + clientId, "debug");
       if (!clientId_info.hasOwnProperty(clientId)) {
         continue;
       }
-      if (
-        notify &&
-        notify.sendToSpecificClientsIds &&
-        !notify.sendToSpecificClientsIds.includes(clientId)
-      ) {
-        this.server4Flutter.logger("notifyClients -> Ignoring client because not informed on sendToSpecificClientsIds" + clientId, "debug");
+      if (notify && notify.sendToSpecificClientsIds && !notify.sendToSpecificClientsIds.includes(clientId)) {
+        this.server.logger("notifyClients -> Ignoring client because not informed on sendToSpecificClientsIds" + clientId, "debug");
         continue;
       }
 
@@ -402,11 +398,11 @@ abstract class _ReadRoute {
       const routeClientListeningByThisClientArray = clientInfo.routesBeingListen.filter((route) => route.route == this.route);
 
       if (!routeClientListeningByThisClientArray?.length) {
-        this.server4Flutter.logger("notifyClients -> client " + clientId + " is not listening to " + this.route, "debug");
+        this.server.logger("notifyClients -> client " + clientId + " is not listening to " + this.route, "debug");
         continue;
       }
 
-      this.server4Flutter.logger("notifyClients -> " + clientId + " listen to: " + clientInfo.routesBeingListen.length, "debug");
+      this.server.logger("notifyClients -> " + clientId + " listen to: " + clientInfo.routesBeingListen.length, "debug");
 
       for(let r=0;r<routeClientListeningByThisClientArray.length;r++){ // this loop was created because of the uncommon cases where the same client listening implementation (internal code, not interface code) is listening multiple times for the same response
         // noinspection PointlessBooleanExpressionJS
@@ -433,7 +429,7 @@ abstract class _ReadRoute {
           );
 
         if (response instanceof RespondSuccess) {
-          this.server4Flutter.logger("notifyClients -> Notifying client " + clientId, "debug");
+          this.server.logger("notifyClients -> Notifying client " + clientId, "debug");
 
           const notifyClientOrNot =
               (await this.realtimeOutputHandler({
@@ -441,7 +437,7 @@ abstract class _ReadRoute {
                 output: response.output,
                 query: routeClientListeningByThisClientArray[r].query,
                 ownClientId: Utils.getOwnClientId(clientId),
-                headers: this.server4Flutter.clientMiddleware.clients.getHeaders(clientId) ?? {},
+                headers: this.server.clientMiddleware.clients.getHeaders(clientId) ?? {},
               })) || ({} as RealtimeOutputHandlerResult); //<--- LINK_PROJECT_RealtimeOutputHandlerCHANGED: remover || ( {} as RealtimeOutputHandler)
 
           if (notifyClientOrNot == null) {
@@ -454,7 +450,7 @@ abstract class _ReadRoute {
               notifyClientOrNot.notifyThisClient != null &&
               notifyClientOrNot.notifyThisClient == false
           ) {
-            this.server4Flutter.logger(this.route + ' - Client "' + clientId + '" will not receive notification, because realtimeOutputHandler', notify && notify.sendToSpecificClientsIds ? "warning" : "debug");
+            this.server.logger(this.route + ' - Client "' + clientId + '" will not receive notification, because realtimeOutputHandler', notify && notify.sendToSpecificClientsIds ? "warning" : "debug");
             return;
           }
 
@@ -462,7 +458,7 @@ abstract class _ReadRoute {
               notifyClientOrNot?.customOutput == null
                   ? response.output
                   : notifyClientOrNot.customOutput;
-          this.server4Flutter.clientMiddleware.assertSendDataToClient(
+          this.server.clientMiddleware.assertSendDataToClient(
               clientId,
               new NewDataForListener(
                   output,
@@ -486,7 +482,7 @@ abstract class _ReadRoute {
               }
           );
         } else {
-          this.server4Flutter.logger("notifyClients -> " + this.route + " could not send the data, because read failed, try passing the output as parameter on notifyClients method", "error", response);
+          this.server.logger("notifyClients -> " + this.route + " could not send the data, because read failed, try passing the output as parameter on notifyClients method", "error", response);
         }
       }
     }
@@ -503,14 +499,14 @@ abstract class _ReadRoute {
     listenId: string
   ): Promise<any> {
     // if(this.clientIsAlreadyListeningTo(listenId)){
-    //   this.server4Flutter.logger("server is already server the client listening request about listenId:"+listenId+" & clientRequestId: "+clientRequestId, "debug");
+    //   this.server.logger("server is already server the client listening request about listenId:"+listenId+" & clientRequestId: "+clientRequestId, "debug");
     //   return;
     // }
     const self = this;
     return new Promise(async (resolve, reject) => {
       self.stopListening(clientId, listenId, self.route);
 
-      const clientInfo = self.server4Flutter.clientMiddleware.clients.getClientInfo(clientId);
+      const clientInfo = self.server.clientMiddleware.clients.getClientInfo(clientId);
       // const start = new Date().getTime();
 
       clientInfo.routesBeingListen.push({
@@ -526,13 +522,13 @@ abstract class _ReadRoute {
         let successAndNowIsListening: boolean = true;
         // if (difference < WAIT) await Utils.delay(WAIT - difference);
         if (error) {
-          self.server4Flutter.logger("listen: READ error", "error", output);
+          self.server.logger("listen: READ error", "error", output);
 
           if (output.code == RespondErrorCode.PERMISSION_DENIED) {
-            self.server4Flutter.logger("listen: the error is PERMISSION_DENIED, calling stopListening...", "error", output);
+            self.server.logger("listen: the error is PERMISSION_DENIED, calling stopListening...", "error", output);
             self.stopListening(clientId, listenId, self.route);
             successAndNowIsListening = false;
-            self.server4Flutter.clientMiddleware.assertSendDataToClient(
+            self.server.clientMiddleware.assertSendDataToClient(
               clientId,
               new ResponseCli(clientRequestId, null, output),
               true,
@@ -540,7 +536,7 @@ abstract class _ReadRoute {
                 undefined
             );
           } else {
-            self.server4Flutter.clientMiddleware.assertSendDataToClient(
+            self.server.clientMiddleware.assertSendDataToClient(
               clientId,
               new ResponseCli(clientRequestId, listenId),
               true,
@@ -549,14 +545,14 @@ abstract class _ReadRoute {
             );
           }
         } else {
-          self.server4Flutter.clientMiddleware.assertSendDataToClient(
+          self.server.clientMiddleware.assertSendDataToClient(
             clientId,
             new ResponseCli(clientRequestId, listenId),
             true,
             undefined,
             undefined
           );
-          self.server4Flutter.clientMiddleware.assertSendDataToClient(
+          self.server.clientMiddleware.assertSendDataToClient(
             clientId,
             new NewDataForListener(output?.output, listenId),
             true,
@@ -571,14 +567,14 @@ abstract class _ReadRoute {
             ownClientId: Utils.getOwnClientId(clientId),
           });
         else
-          self.server4Flutter.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), "error");
+          self.server.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), "error");
 
         resolve(successAndNowIsListening ? listenId : null);
       };
       const response = await self.readInternal({
         query: query,
         ownClientId: Utils.getOwnClientId(clientId),
-        headers: self.server4Flutter.clientMiddleware.clients.getHeaders(clientId),
+        headers: self.server.clientMiddleware.clients.getHeaders(clientId),
       });
       if (
         response == null ||
@@ -631,7 +627,7 @@ abstract class _ReadRoute {
     if (listenId == null && route != null)
       throw Error("please, inform the listenId");
 
-    const clientInfo = this.server4Flutter.clientMiddleware.clients.getClientInfo(clientId);
+    const clientInfo = this.server.clientMiddleware.clients.getClientInfo(clientId);
 
     let remove: Array<RouteBeingListen> = [];
     if (listenId) {
@@ -716,7 +712,7 @@ export class ReadRouteImp extends ReadRoute {
   }) {
     if (this._onClientStartsListening)
       return this._onClientStartsListening(context);
-    else this.server4Flutter.logger("onClientStartsListening is null", "debug");
+    else this.server.logger("onClientStartsListening is null", "debug");
   }
 
   //override
@@ -726,7 +722,7 @@ export class ReadRouteImp extends ReadRoute {
   }) {
     if (this._onClientStopsListening)
       return this._onClientStopsListening(context);
-    else this.server4Flutter.logger("_onClientStopsListening is null", "debug");
+    else this.server.logger("_onClientStopsListening is null", "debug");
   }
 
 

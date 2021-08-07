@@ -12,14 +12,37 @@ export class LastClientRequest {
   public requestReceivedAt = Date.now();
 
   constructor(public readonly clientRequestId) {}
+
+  /*** keep received message for 10 minutes */
+  shouldKeepReceivedMessage():boolean {
+    return this.requestReceivedAt + 10 * 60 * 1000 >= Date.now();
+  }
 }
 /** @internal */
-export type PendingMessage = {
+export class PendingMessage {
   dataSentToClient: ResponseCli | NewDataForListener;
   firstTryAt: number;
   onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
   onClientFailsToReceive?: OnClientFailsToReceive;
-};
+
+  canBeRemovedFromQueue(secondsToStopTryingToSendMessageAgainAndAgain?:number):boolean {
+    return secondsToStopTryingToSendMessageAgainAndAgain != null &&
+           secondsToStopTryingToSendMessageAgainAndAgain >= 1    &&
+           this.firstTryAt + secondsToStopTryingToSendMessageAgainAndAgain * 1000 >= Date.now();
+  }
+
+  constructor(params:{
+    dataSentToClient: ResponseCli | NewDataForListener;
+    firstTryAt: number;
+    onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
+    onClientFailsToReceive?: OnClientFailsToReceive;
+  }) {
+    this.dataSentToClient = params.dataSentToClient;
+    this.firstTryAt = params.firstTryAt;
+    this.onClientReceiveWithSuccess = params.onClientReceiveWithSuccess;
+    this.onClientFailsToReceive = params.onClientFailsToReceive;
+  }
+}
 /** @internal */
 export type RouteBeingListen = {
   route: string;
@@ -39,6 +62,11 @@ export class ClientInfo {
   routesBeingListen: Array<RouteBeingListen> = [];
   clientType: "flutter" | "javascript";
   constructor(public readonly clientId: string | number) {}
+
+  canBeDeleted(intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient:number) : boolean{
+    return this.disconnectedAt != null &&
+        this.disconnectedAt + intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient * 1000 < Date.now();
+  }
 }
 /** @internal */
 export class Clients {
@@ -47,7 +75,7 @@ export class Clients {
     ClientInfo
   > = new Map<string, ClientInfo>();
 
-  constructor(public readonly server4Flutter: ServerInternalImp) {}
+  constructor(public readonly server: ServerInternalImp) {}
 
   setHeaders(clientId: string | number, headers) {
     this.getClientInfo(clientId).headers = headers;
@@ -63,7 +91,7 @@ export class Clients {
     if (!routeBeingListen) {
       throw Error("routeBeingListen not found " + listenId);
     }
-    this.server4Flutter
+    this.server
       .getReadRoute(routeBeingListen.route)
       .stopListening(clientInfo.clientId, listenId, routeBeingListen.route);
   }
@@ -114,7 +142,7 @@ export class Clients {
 
   deleteClientsInfos(clearClientsIds: Array<string | number>) {
     if (clearClientsIds.length == 0) return;
-    this.server4Flutter.logger("deleteClientsInfos", "debug", clearClientsIds);
+    this.server.logger("deleteClientsInfos", "debug", clearClientsIds);
     clearClientsIds.forEach((clientId) => {
       const clientInfo = this.clientId_clientInfo[clientId] as ClientInfo;
       for (
@@ -123,7 +151,7 @@ export class Clients {
         route++
       ) {
         const routeBeingListen = clientInfo.routesBeingListen[route];
-        this.server4Flutter
+        this.server
           .getReadRoute(routeBeingListen.route)
           .stopListening(clientId);
       }

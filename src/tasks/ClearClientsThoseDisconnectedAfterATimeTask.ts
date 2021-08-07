@@ -1,33 +1,26 @@
 import { AbstractTimedTask } from "./AbstractTimedTask";
 import { ServerInternalImp, ws_clientId } from "../index";
+import {ClientInfo} from "../client_middleware/Clients";
 
 export class ClearRuntimeDataFromDisconnectedClientTask extends AbstractTimedTask {
-  constructor(server4Flutter: ServerInternalImp) {
-    super(server4Flutter);
+  constructor(server: ServerInternalImp) {
+    super(server);
   }
 
   run() {
-    if (!this.server4Flutter?.clientMiddleware?.clients) {
-      this.server4Flutter.logger("ClearRuntimeDataFromDisconnectedClientTask this.server4Flutter?.clientMiddleware?.clients IS NULL", "error");
+    if (!this.server?.clientMiddleware?.clients) {
+      this.server.logger("ClearRuntimeDataFromDisconnectedClientTask this.server?.clientMiddleware?.clients IS NULL", "error");
       return;
     }
-    const clientsId_clientInfo = this.server4Flutter.clientMiddleware.clients.getAllClientsInfos();
+    const clientsId_clientInfo = this.server.clientMiddleware.clients.getAllClientsInfos();
     for (let clientId in clientsId_clientInfo) {
       if (!clientsId_clientInfo.hasOwnProperty(clientId)) {
         return;
       }
-      const clientInfo = clientsId_clientInfo[clientId];
-      if (
-        clientInfo.disconnectedAt != null &&
-        clientInfo.disconnectedAt +
-          this.server4Flutter.config[
-            "intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient"
-          ] *
-            1000 <
-          Date.now()
-      ) {
-        this.server4Flutter.logger("Cleaning data from disconnected user " + clientId, "debug", clientInfo);
-        this.server4Flutter.clientMiddleware.clients.deleteClientsInfos([
+      const clientInfo = clientsId_clientInfo[clientId] as ClientInfo;
+      if (clientInfo.canBeDeleted((this.server.config??{})["intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient"])) {
+        this.server.logger("Cleaning data from disconnected user " + clientId, "debug", clientInfo);
+        this.server.clientMiddleware.clients.deleteClientsInfos([
           clientId,
         ]);
       }

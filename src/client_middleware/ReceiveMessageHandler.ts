@@ -29,7 +29,7 @@ export class ReceiveMessageHandler {
   constructor(public readonly internalServerImp: ServerInternalImp) {}
 
   async handleClientRequestInput(_input, ws) {
-    //this.server4Flutter.logger("handleClientInput: "+clientId, "debug");
+    //this.server.logger("handleClientInput: "+clientId, "debug");
     let ownClientIdOrNull;
 
     if (_input[ConfigureConnectionRequestCli.type] != null) {
@@ -142,7 +142,6 @@ export class ReceiveMessageHandler {
       new LastClientRequest(_input.clientRequestId)
     );
 
-    const NOW = Date.now();
     if (clientInfo.lastClientRequestList.length > 100) {
       this.internalServerImp.logger("handleClientRequestInput: Start of removing unnecessary info's of user " + clientInfo.clientId + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
       const remove = Array<LastClientRequest>();
@@ -152,12 +151,9 @@ export class ReceiveMessageHandler {
         i--
       ) {
         const messageReceivedFromServer = clientInfo.lastClientRequestList[i];
-        if (
-          messageReceivedFromServer &&
-          messageReceivedFromServer.requestReceivedAt + 10 * 60 * 1000 < NOW
-        )
-          //keep received message for 10 minutes
+        if (messageReceivedFromServer?.shouldKeepReceivedMessage() == false) {
           remove.push(messageReceivedFromServer);
+        }
       }
       clientInfo.lastClientRequestList = clientInfo.lastClientRequestList.filter(
         (req) => req && !remove.includes(req)
@@ -214,7 +210,7 @@ export class ReceiveMessageHandler {
     if (response instanceof RespondError) {
       if (response.code == null)
         this.internalServerImp.logger("respondWithError: read in " + data.route + "/" + data.route + " is null", "warning");
-      service.server4Flutter.clientMiddleware.assertSendDataToClient(
+      service.server.clientMiddleware.assertSendDataToClient(
         clientId,
         new ResponseCli(data.clientRequestId, null, response),
         true,
@@ -225,7 +221,7 @@ export class ReceiveMessageHandler {
       response = response as RespondSuccess;
       if (response == null || response.output == null)
         this.internalServerImp.logger("respondWithSuccess: read in " + data.route + "/" + data.route + " is null", "warning");
-      service.server4Flutter.clientMiddleware.assertSendDataToClient(
+      service.server.clientMiddleware.assertSendDataToClient(
         clientId,
         new ResponseCli(data.clientRequestId, response?.output),
         true,

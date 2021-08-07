@@ -13,7 +13,7 @@ export abstract class AbstractTimedTask {
     this._started = false;
   }
 
-  protected constructor(public readonly server4Flutter: ServerInternalImp) {}
+  protected constructor(public readonly server: ServerInternalImp) {}
 
   abstract run();
 
