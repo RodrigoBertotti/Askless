@@ -17,8 +17,8 @@ export class LastClientRequest {
 export type PendingMessage = {
   dataSentToClient: ResponseCli | NewDataForListener;
   firstTryAt: number;
-  onClientReceiveWithSuccess: OnClientSuccessfullyReceives;
-  onClientFailsToReceive: OnClientFailsToReceive;
+  onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
+  onClientFailsToReceive?: OnClientFailsToReceive;
 };
 /** @internal */
 export type RouteBeingListen = {
@@ -32,10 +32,10 @@ export class ClientInfo {
   pendingMessages: Array<PendingMessage> = [];
   onClose: VoidFunction;
   lastClientRequestList: LastClientRequest[] = [];
-  disconnectedAt: number = null;
-  sendMessage: SendMessageToClientCallback;
-  headers: object;
-  doWsDisconnect: VoidFunction;
+  disconnectedAt?: number = undefined;
+  sendMessage?: SendMessageToClientCallback;
+  headers?: object;
+  doWsDisconnect?: VoidFunction;
   routesBeingListen: Array<RouteBeingListen> = [];
   clientType: "flutter" | "javascript";
   constructor(public readonly clientId: string | number) {}
@@ -52,7 +52,7 @@ export class Clients {
   setHeaders(clientId: string | number, headers) {
     this.getClientInfo(clientId).headers = headers;
   }
-  getHeaders(clientId: string | number): object {
+  getHeaders(clientId: string | number): object|undefined {
     return this.getClientInfo(clientId).headers;
   }
 

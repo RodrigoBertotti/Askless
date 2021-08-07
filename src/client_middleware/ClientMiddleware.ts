@@ -83,8 +83,8 @@ export class ClientMiddleware {
                 ws[ws_clientId],
                 response,
                 true,
-                null,
-                null
+                undefined,
+                undefined
               );
             }
           } else {
@@ -106,8 +106,8 @@ export class ClientMiddleware {
                 })
               ),
               true,
-              null,
-              null
+              undefined,
+                undefined
             );
           }
         }
@@ -152,14 +152,14 @@ export class ClientMiddleware {
   assertSendDataToClient(
     clientId: string | number,
     sendData: ResponseCli | NewDataForListener,
-    ifFailTryAgain: boolean,
-    onClientReceiveWithSuccess: OnClientSuccessfullyReceives,
-    onClientFailsToReceive: OnClientFailsToReceive
+    ifFailTryAgain?: boolean,
+    onClientReceiveWithSuccess?: OnClientSuccessfullyReceives,
+    onClientFailsToReceive?: OnClientFailsToReceive
   ): void {
     try {
       const clientInfo = this.clients.getClientInfo(clientId);
 
-      if (ifFailTryAgain == null || ifFailTryAgain == true)
+      if (ifFailTryAgain == null || ifFailTryAgain)
         clientInfo.pendingMessages.push({
           dataSentToClient: sendData,
           firstTryAt: Date.now(),

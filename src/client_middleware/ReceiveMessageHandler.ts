@@ -37,7 +37,7 @@ export class ReceiveMessageHandler {
       ownClientIdOrNull = Utils.getOwnClientId(input.clientId);
       if (
         ownClientIdOrNull != null &&
-        !(await this.internalServerImp.config.grantConnection(ownClientIdOrNull, input.headers))
+        !(await this.internalServerImp.config.grantConnection?.call(ownClientIdOrNull, input.headers))
       ) {
         throw new ServerError(
           "The client " +
@@ -70,9 +70,9 @@ export class ReceiveMessageHandler {
         this.internalServerImp.logger("onClose websocket " + ws[ws_clientId], "debug");
         //Apaga apenas as informações relacionadas a conexão, não apaga mensagens pendentes
         //As respostas serão deixadas ainda, serão apagadas depois com o clientId_disconnectedAt
-        clientInfo.sendMessage = null;
-        clientInfo.headers = null;
-        clientInfo.doWsDisconnect = null;
+        clientInfo.sendMessage = undefined;
+        clientInfo.headers = undefined;
+        clientInfo.doWsDisconnect = undefined;
         clientInfo.disconnectedAt = Date.now();
       };
       clientInfo.doWsDisconnect = () => {
@@ -95,8 +95,8 @@ export class ReceiveMessageHandler {
           this.internalServerImp.getConnectionConfiguration(ws[ws_clientType])
         ),
         true,
-        null,
-        null
+          undefined,
+          undefined
       ); //TEM QUE VIR DEPOIS DE onHeadersRequestCallback
       return;
     }
@@ -130,7 +130,7 @@ export class ReceiveMessageHandler {
     }
 
     if (!clientInfo.pendingMessages) clientInfo.pendingMessages = [];
-    const requestAlreadyReceivedFromClientBefore: LastClientRequest = clientInfo.lastClientRequestList.find(
+    const requestAlreadyReceivedFromClientBefore: LastClientRequest|undefined = clientInfo.lastClientRequestList.find(
       (c: LastClientRequest) => c.clientRequestId == _input.clientRequestId
     );
     if (requestAlreadyReceivedFromClientBefore) {
@@ -187,17 +187,13 @@ export class ReceiveMessageHandler {
       await this.modify(_input, ws[ws_clientId], clientInfo.headers);
     else
       throw new ServerError(
-        "Not class type requestAlreadyReceivedFromClientBefore to handle",
-        null,
+       "Not class type requestAlreadyReceivedFromClientBefore to handle",
+       undefined,
         _input
       );
   }
 
-  private async read(
-    data: ReadCli,
-    clientId: string | number | undefined,
-    headers: object
-  ) {
+  private async read(data: ReadCli, clientId: string | number, headers: object) {
     const service = this.internalServerImp.getReadRoute(data.route);
     let response = await service.readInternal({
       headers: headers,
@@ -222,8 +218,8 @@ export class ReceiveMessageHandler {
         clientId,
         new ResponseCli(data.clientRequestId, null, response),
         true,
-        null,
-        null
+        undefined,
+        undefined
       );
     } else {
       response = response as RespondSuccess;
@@ -313,8 +309,8 @@ export class ReceiveMessageHandler {
         clientId,
         new ResponseCli(data.clientRequestId, null, res),
         true,
-        null,
-        null
+          undefined,
+          undefined
       );
     } else {
       res = res as RespondSuccess;

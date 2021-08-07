@@ -310,7 +310,7 @@ abstract class _ReadRoute {
          };
       }
      * */
-  public abstract realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult; //#LINK_PROJECT_RealtimeOutputHandlerCHANGED
+  public abstract realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult | undefined; //#LINK_PROJECT_RealtimeOutputHandlerCHANGED
 
 
 
@@ -365,10 +365,8 @@ abstract class _ReadRoute {
     this._notifyClientsAsync(notifyClientsParams);
   }
 
-  async _notifyClientsAsync(
-    notify?: NotifyClientsParams
-  ): Promise<void> {
-    this.server4Flutter.logger("notifyClients -> started " + notify.output + " " + this.route, "debug");
+  async _notifyClientsAsync(notify?: NotifyClientsParams): Promise<void> {
+    this.server4Flutter.logger("notifyClients -> started " + (notify?.output??'') + " " + this.route, "debug");
 
     if (
       notify &&
@@ -443,7 +441,7 @@ abstract class _ReadRoute {
                 output: response.output,
                 query: routeClientListeningByThisClientArray[r].query,
                 ownClientId: Utils.getOwnClientId(clientId),
-                headers: this.server4Flutter.clientMiddleware.clients.getHeaders(clientId),
+                headers: this.server4Flutter.clientMiddleware.clients.getHeaders(clientId) ?? {},
               })) || ({} as RealtimeOutputHandlerResult); //<--- LINK_PROJECT_RealtimeOutputHandlerCHANGED: remover || ( {} as RealtimeOutputHandler)
 
           if (notifyClientOrNot == null) {
@@ -501,7 +499,7 @@ abstract class _ReadRoute {
     clientId: string | number,
     clientRequestId: string,
     query: object,
-    headers: object,
+    headers: object|undefined,
     listenId: string
   ): Promise<any> {
     // if(this.clientIsAlreadyListeningTo(listenId)){
@@ -538,16 +536,16 @@ abstract class _ReadRoute {
               clientId,
               new ResponseCli(clientRequestId, null, output),
               true,
-              null,
-              null
+                undefined,
+                undefined
             );
           } else {
             self.server4Flutter.clientMiddleware.assertSendDataToClient(
               clientId,
               new ResponseCli(clientRequestId, listenId),
               true,
-              null,
-              null
+                undefined,
+                undefined
             );
           }
         } else {
@@ -555,8 +553,8 @@ abstract class _ReadRoute {
             clientId,
             new ResponseCli(clientRequestId, listenId),
             true,
-            null,
-            null
+            undefined,
+            undefined
           );
           self.server4Flutter.clientMiddleware.assertSendDataToClient(
             clientId,
@@ -567,27 +565,25 @@ abstract class _ReadRoute {
           );
         }
 
-        if (successAndNowIsListening && self.onClientStartsListening)
+        if (successAndNowIsListening)
           self.onClientStartsListening({
             route: self.route,
             ownClientId: Utils.getOwnClientId(clientId),
           });
         else
-          self.server4Flutter.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), self.onClientStartsListening ? "error" : "debug");
+          self.server4Flutter.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), "error");
 
         resolve(successAndNowIsListening ? listenId : null);
       };
       const response = await self.readInternal({
         query: query,
         ownClientId: Utils.getOwnClientId(clientId),
-        headers: self.server4Flutter.clientMiddleware.clients.getHeaders(
-          clientId
-        ),
+        headers: self.server4Flutter.clientMiddleware.clients.getHeaders(clientId),
       });
       if (
         response == null ||
         (!(response instanceof RespondError) &&
-          !(response instanceof RespondSuccess))
+        !(response instanceof RespondSuccess))
       )
         throw Error(
           "response of read " +
@@ -616,18 +612,18 @@ abstract class _ReadRoute {
   onClientStartsListening(context: {
     ownClientId: string | number | undefined;
     route: string;
-  }) {}
+  }){};
 
   /** Callback that is triggered when a client stops listening to `route`. */
   onClientStopsListening(context: {
     ownClientId: string | number | undefined;
     route: string;
-  }) {}
+  }){};
 
   /** @internal */
   stopListening(
     clientId: string | number,
-    listenId?: string,
+    listenId?:string,
     route?: string
   ): void {
 
@@ -687,17 +683,17 @@ export abstract class ReadRoute extends _ReadRoute {
 export class ReadRouteImp extends ReadRoute {
   constructor(
     route: string,
-    public readonly _realtimeOutputHandler: (
+    public readonly _realtimeOutputHandler?: (
       context: RealtimeOutputHandlerContext
     ) => RealtimeOutputHandlerResult,
-    public readonly _read: (
+    public readonly _read?: (
       context: ReadRouteContext
     ) => void,
-    public readonly _onClientStartsListening: (context: {
+    public readonly _onClientStartsListening?: (context: {
       ownClientId: string | number | undefined;
       route: string;
     }) => void,
-    public readonly _onClientStopsListening: (context: {
+    public readonly _onClientStopsListening?: (context: {
       ownClientId: string | number | undefined;
       route: string;
     }) => void
@@ -735,7 +731,7 @@ export class ReadRouteImp extends ReadRoute {
 
 
   //override
-  realtimeOutputHandler(context) : RealtimeOutputHandlerResult{
+  realtimeOutputHandler(context) : RealtimeOutputHandlerResult | undefined{
     if(this._realtimeOutputHandler){
       return this._realtimeOutputHandler({
         query: context.query,

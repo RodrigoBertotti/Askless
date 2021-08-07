@@ -7,18 +7,22 @@ export class ResponseCli {
   private readonly _class_type_response = "_";
   public static readonly RESPONSE_PREFIX = "RES-";
 
+  public serverId:string;
+
   constructor(
     public readonly clientRequestId: string, // evitar que o servidor receba 2 vezes a mesma mensagem e evitar que o cliente receba 2 vezes a mesma mensagem
     public readonly output: any,
     public readonly error?: RespondError,
     public dataType = "ResponseCli",
-    public serverId?: string
+    serverId?: string
   ) {
-    if (this.serverId == null)
+    if (serverId == null)
       this.serverId = ResponseCli.RESPONSE_PREFIX + Utils.makeId(11);
+    else
+      this.serverId = serverId;
   }
 
-  isSuccess(): boolean {
+  get isSuccess(): boolean {
     return this.error == null;
   }
 }
@@ -29,7 +33,7 @@ export class ServerConfirmReceiptCli extends ResponseCli {
   private readonly _class_type_serverconfirmreceipt = "_";
 
   constructor(clientRequestId: string) {
-    super(clientRequestId, "RECEIVED", null, "ServerConfirmReceiptCli");
+    super(clientRequestId, "RECEIVED", undefined, "ServerConfirmReceiptCli");
   }
 }
 
@@ -41,7 +45,7 @@ export class ConfigureConnectionResponseCli extends ResponseCli {
     super(
       clientRequestId,
       connectionConfiguration,
-      null,
+      undefined,
       "ConfigureConnectionResponse"
     );
   }

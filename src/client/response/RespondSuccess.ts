@@ -35,9 +35,9 @@ export type RespondSuccessParams = {
 export class RespondSuccess {
     private readonly _class_type_success = "_";
 
-    public readonly onClientFailsToReceive: OnClientFailsToReceive;
-    public readonly onClientSuccessfullyReceives: OnClientSuccessfullyReceives;
-    public readonly output: any;
+    public readonly onClientFailsToReceive?: OnClientFailsToReceive;
+    public readonly onClientSuccessfullyReceives?: OnClientSuccessfullyReceives;
+    public readonly output?: any;
 
     /**
      *  The construtor param it's
@@ -63,14 +63,8 @@ export class RespondSuccess {
      *  }
      */
     constructor(successParams?: RespondSuccessParams) {
-        //if((successParams as RespondSuccessParams).output==null){
-        //    throw Error("Err");
-        //}
-        if (successParams) {
-            this.output = successParams.output;
-            this.onClientSuccessfullyReceives =
-                successParams.onClientSuccessfullyReceives;
-            this.onClientFailsToReceive = successParams.onClientFailsToReceive;
-        }
+        this.output = successParams?.output;
+        this.onClientSuccessfullyReceives = successParams?.onClientSuccessfullyReceives;
+        this.onClientFailsToReceive = successParams?.onClientFailsToReceive;
     }
 }

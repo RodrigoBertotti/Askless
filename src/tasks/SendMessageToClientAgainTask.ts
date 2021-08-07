@@ -28,8 +28,8 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
           clientId,
           pending.dataSentToClient,
           false,
-          null,
-          null
+          undefined,
+          undefined
         );
 
         if (

@@ -37,9 +37,9 @@ export type RespondErrorParams = {
  * */
 export class RespondError {
     private readonly _class_type_reqerror = "_";
-    readonly code: RespondErrorCode | string;
-    readonly description: string;
-    readonly stack: any;
+    readonly code?: RespondErrorCode | string;
+    readonly description?: string;
+    readonly stack?: any;
 
     /**
      *  The construtor param it's
@@ -67,11 +67,9 @@ export class RespondError {
      *
      * */
     constructor(respondErrorParams?: RespondErrorParams) {
-        if (respondErrorParams) {
-            this.code = respondErrorParams.code;
-            this.description = respondErrorParams.description;
-            this.stack = respondErrorParams.stack;
-        }
+        this.code = respondErrorParams?.code;
+        this.description = respondErrorParams?.description;
+        this.stack = respondErrorParams?.stack;
     }
     //TODO? onClientSuccessfullyReceives and onClientFailsToReceive
 };

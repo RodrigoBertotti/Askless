@@ -43,7 +43,7 @@ class ListAllProductsRoute extends ReadRoute {
     constructor() {super('product/all');}
 
     //override
-    realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult {
+    realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult | undefined {
         if (context.query != null && context.query['search'] != null) {
             const search = context.query['search'].toString().trim().toLowerCase();
 
@@ -81,7 +81,7 @@ class ListAllProductsReversedRoute extends ReadRoute {
     constructor() {super('product/all/reversed');}
 
     //override
-    realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult {
+    realtimeOutputHandler(context: RealtimeOutputHandlerContext): RealtimeOutputHandlerResult | undefined {
         if (context.query != null && context.query['search'] != null) {
             const search = context.query['search'].toString().trim().toLowerCase();
 

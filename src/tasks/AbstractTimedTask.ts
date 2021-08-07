@@ -2,12 +2,14 @@ import { ServerInternalImp } from "../index";
 
 export abstract class AbstractTimedTask {
   private _started = false;
-  private interval: NodeJS.Timeout;
+  private interval?: NodeJS.Timeout;
   protected intervalMs: number;
 
   stop() {
-    clearInterval(this.interval);
-    this.interval = null;
+    if(this.interval){
+      clearInterval(this.interval);
+      this.interval = undefined;
+    }
     this._started = false;
   }
 

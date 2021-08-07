@@ -31,13 +31,13 @@ class ProductsRepository {
         if(search == null || search.length == 0)
             return Array.from(this.productsListFromDatabase);
         search = search.toLowerCase();
-        return Array.from(this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search) || p.price.toString().includes(search)));
+        return Array.from(this.productsListFromDatabase.filter((p) => p.name.toLowerCase().includes(search!) || p.price.toString().includes(search!)));
     }
 
     async delete(id:number) : Promise<Product>{
         console.log("Removing "+id);
         const product = this.productsListFromDatabase.find((product) => product.id == id);
-        this.productsListFromDatabase.splice(this.productsListFromDatabase.indexOf(product),1);
+        this.productsListFromDatabase.splice(this.productsListFromDatabase.indexOf(product!),1);
         await this._notify();
         return Object.assign({}, product) as Product;
     }

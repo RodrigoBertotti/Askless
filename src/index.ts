@@ -40,6 +40,7 @@ import {
   RespondErrorCode,
   RequestType,
 } from "./client/Types";
+import {ClientInfo} from "./client_middleware/Clients";
 
 
 export class ServerError extends Error {
@@ -321,7 +322,7 @@ export class ServerInternalImp {
   }
 
   get localUrl () : String {
-    return 'ws://'+myIPv4()+':'+this.wss.options.port.toString();
+    return 'ws://'+myIPv4()+':'+(this.wss.options.port?.toString() ?? '????');
   }
 
   start(): void {
@@ -538,7 +539,7 @@ export class AsklessServer {
       params.realtimeOutputHandler,
       params.read,
       params.onClientStartsListening,
-      params.onClientStopsListening
+      params.onClientStopsListening,
     );
     this.addRoute(readRoute);
 
@@ -589,9 +590,10 @@ export class AsklessServer {
     if (ownClientId == null)
       throw Error("You cannot disconnect a client without an App generated ID");
     try {
-      this.server4Flutter.clientMiddleware.clients
-        .getClientInfo(ownClientId)
-        .doWsDisconnect();
+      const clientInfo:ClientInfo = this.server4Flutter.clientMiddleware.clients.getClientInfo(ownClientId);
+      if(clientInfo?.doWsDisconnect) {
+        clientInfo.doWsDisconnect();
+      }
     } catch (e) {
       this.server4Flutter.logger("Could not disconnect the client " + ownClientId, "error", e.stack);
     }

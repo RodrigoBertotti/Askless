@@ -1,4 +1,4 @@
-import {AsklessServer, RespondSuccess, RespondError} from "../../dist/askless";
+import {AsklessServer} from "../../dist/askless";
 import {SimpleCheckBearerExample} from "./auth/SimpleCheckBearerExample";
 import {
     createProductRoute,
@@ -8,7 +8,7 @@ import {
 } from "./routes/ProductsRoute";
 
 
-const server = new AsklessServer();
+const server:AsklessServer = new AsklessServer();
 
 const isProduction = false;
 
@@ -16,7 +16,7 @@ server.init({
     projectName: 'catalog',
     grantConnection: SimpleCheckBearerExample.validateToken,
     sendInternalErrorsToClient: !isProduction,
-    logger: isProduction ? null : { // DO NOT DO SHOW ASKLESS LOGS ON THE CONSOLE ON A PRODUCTION ENVIRONMENT
+    logger: isProduction ? undefined : { // DO NOT DO SHOW ASKLESS LOGS ON THE CONSOLE ON A PRODUCTION ENVIRONMENT
         customLogger: (message, level, additionalData) =>{
             console.log(level +': '+message);
             if(additionalData){
