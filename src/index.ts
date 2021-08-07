@@ -253,12 +253,9 @@ export class ServerInternalImp {
     if (config.requestTimeoutInSeconds == null)
       config.requestTimeoutInSeconds = 15;
 
-    if (config.grantConnection == null)
-      config.grantConnection = async (
-        ownClientId: string | number,
-        headers: object
-      ) => Promise.resolve(true);
-
+    if (config.grantConnection == null) {
+      config.grantConnection = (_, __) => Promise.resolve(true);
+    }
     config["reconnectClientAfterSecondsWithoutServerPong"] = 10;
     config[
       "intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient"
@@ -548,7 +545,8 @@ export class AsklessServer {
         return new Promise(async (resolve, reject) => {
           setTimeout(
             () => {
-              resolve(readRoute.notifyClients(notify));
+              readRoute.notifyClients(notify);
+              resolve();
             },
             readRoute.server4Flutter ? 0 : 200
           );
