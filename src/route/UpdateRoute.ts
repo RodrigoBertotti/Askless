@@ -46,7 +46,7 @@ export abstract class UpdateRoute {
   ): void;
 
   /** @internal */
-  public updateInternal(context) : Promise<RespondSuccess | RespondError>{
+  public updatePromise(context) : Promise<RespondSuccess | RespondError>{
     return new Promise((resolve) => {
       this.update({
         body: context.body,

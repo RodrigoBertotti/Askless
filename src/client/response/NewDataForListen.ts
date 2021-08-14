@@ -1,4 +1,4 @@
-import {Utils} from "../Utils";
+import {makeId} from "../../Utils";
 
 export class NewDataForListener {
     public static readonly PREFIX = "NEW-";
@@ -14,6 +14,6 @@ export class NewDataForListener {
     }
 
     static generateIdPrefix() {
-        return NewDataForListener.PREFIX + Utils.makeId(5) + "-";
+        return NewDataForListener.PREFIX + makeId(5) + "-";
     }
 }

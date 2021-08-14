@@ -7,7 +7,8 @@ export class ClearRuntimeDataFromDisconnectedClientTask extends AbstractTimedTas
     super(server);
   }
 
-  run() {
+  //override
+  protected run() {
     if (!this.server?.clientMiddleware?.clients) {
       this.server.logger("ClearRuntimeDataFromDisconnectedClientTask this.server?.clientMiddleware?.clients IS NULL", "error");
       return;

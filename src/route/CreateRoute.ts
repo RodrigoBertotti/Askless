@@ -46,7 +46,7 @@ export abstract class CreateRoute {
 
 
   /** @internal */
-  public createInternal(context) : Promise<RespondSuccess | RespondError>{
+  public createPromise(context) : Promise<RespondSuccess | RespondError>{
     return new Promise((resolve) => {
         this.create({
           body: context.body,

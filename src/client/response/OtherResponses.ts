@@ -1,4 +1,4 @@
-import { Utils } from "../Utils";
+import {makeId} from "../../Utils";
 import {RespondError} from "./RespondError";
 
 
@@ -17,7 +17,7 @@ export class ResponseCli {
     serverId?: string
   ) {
     if (serverId == null)
-      this.serverId = ResponseCli.RESPONSE_PREFIX + Utils.makeId(11);
+      this.serverId = ResponseCli.RESPONSE_PREFIX + makeId(11);
     else
       this.serverId = serverId;
   }

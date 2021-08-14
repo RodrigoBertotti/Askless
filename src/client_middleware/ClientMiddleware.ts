@@ -1,11 +1,10 @@
 import { ConfigureConnectionRequestCli } from "../client/RequestCli";
-import { ReceiveMessageHandler } from "./ReceiveMessageHandler";
+import { ReceiveMessageHandler } from "./ws/onMessage/ReceiveMessageHandler/ReceiveMessageHandler";
 import {
   ResponseCli,
   ServerConfirmReceiptCli,
 } from "../client/response/OtherResponses";
 import {NewDataForListener, RespondErrorCode} from "..";
-
 import * as WebSocket from "ws";
 import {ClientInfo, Clients, PendingMessage} from "./Clients";
 import { PingPong } from "../client/PingPong";
@@ -20,13 +19,13 @@ import {
   OnClientSuccessfullyReceives,
 } from "../route/ReadRoute";
 import {Runtime} from "inspector";
+import {OnMessage} from "./ws/onMessage/onMessage";
+
+
 
 /** @internal */
 export class ClientMiddleware {
   readonly clients: Clients;
-  readonly receiveMessageHandler = new ReceiveMessageHandler(
-    this.server
-  );
 
   constructor(public readonly server: ServerInternalImp) {
     this.clients = new Clients(server);
@@ -35,83 +34,12 @@ export class ClientMiddleware {
   start() {
     const self = this;
     this.server.wss.on("connection", (ws) => {
+
       self.server.logger('new client connected, sending "welcome"', "debug");
-
       ws.send("welcome");
-
       ws[ws_isAlive] = true;
 
-      ws.on("message", async (data) => {
-        const req = JSON.parse(data.toString());
-        ws[ws_isAlive] = true;
-
-        //self.server.logger("client "+ws[ws_clientId]+" said (alive="+ws[ws_isAlive]+")", "debug", req);
-
-        try {
-          if (req[PingPong.type] != null) {
-            //is ping from client
-            await self.receiveMessageHandler.handlePingFromClient(req, ws[ws_clientId]);
-            return;
-          }
-          if (!req.clientRequestId) {
-            // noinspection ExceptionCaughtLocallyJS
-            console.error(JSON.stringify(req));
-            throw Error("Invalid request, no clientRequestId");
-          }
-
-          await self.receiveMessageHandler.handleClientRequestInput(req, ws);
-        } catch (e) {
-          if ((e as ServerError).code != null) {
-            //ServerError
-            self.server.logger("error: " + e["type"], "debug");
-            const error = e as ServerError;
-            const invalidToken: boolean =
-              error.code == RespondErrorCode.TOKEN_INVALID;
-            const response = new ResponseCli(
-              req.clientRequestId,
-              null,
-              new RespondError({
-                description: error.message,
-                code: error.code,
-              })
-            );
-            if (invalidToken) {
-              ws.send(JSON.stringify(response));
-              ws.close();
-            } else {
-              self.assertSendDataToClient(
-                ws[ws_clientId],
-                response,
-                true,
-                undefined,
-                undefined
-              );
-            }
-          } else {
-            self.server.logger(e.toString(), "error", e.stack);
-            self.assertSendDataToClient(
-              ws[ws_clientId],
-              new ResponseCli(
-                req.clientRequestId,
-                null,
-                new RespondError({
-                  code: RespondErrorCode.INTERNAL_ERROR,
-                  description: self.server.config
-                    .sendInternalErrorsToClient
-                    ? e.stack
-                    : "An internal error occurred",
-                  stack: self.server.config.sendInternalErrorsToClient
-                    ? e.stack
-                    : null,
-                })
-              ),
-              true,
-              undefined,
-                undefined
-            );
-          }
-        }
-      });
+      ws.on("message", new OnMessage(this, ws).onMessage);
 
       ws.on("error", function (_, err) {
         // _ is websocket, but it doesn't have the clientId field
@@ -121,7 +49,7 @@ export class ClientMiddleware {
       ws.on("close", function (_, code, reason) {
         // _ is websocket, but it doesn't have the clientId field
         self.server.logger("websocket close: " + ws + " " + JSON.stringify(code) + " " + JSON.stringify(reason), "debug", code);
-        self.clients.getClientInfo(ws[ws_clientId])?.onClose?.();
+        self.clients.getOrCreateClientInfo(ws[ws_clientId]).onClose?.();
       });
     });
 
@@ -134,7 +62,7 @@ export class ClientMiddleware {
   confirmReceiptToClient(clientId: string | number, clientRequestId: string) {
     // console.log("--------------> confirmReceiptToClient "+clientRequestId+" <--------------------------");
     // console.log(new Error().stack);
-    const sendMsgCallback = this.clients.getClientInfo(clientId).sendMessage;
+    const sendMsgCallback = this.clients.getOrCreateClientInfo(clientId).sendMessage;
     if (sendMsgCallback == null) {
       const err =
         "confirmReceiptToClient: message could not be sent: the client " +
@@ -157,7 +85,7 @@ export class ClientMiddleware {
     onClientFailsToReceive?: OnClientFailsToReceive
   ): void {
     try {
-      const clientInfo = this.clients.getClientInfo(clientId);
+      const clientInfo = this.clients.getOrCreateClientInfo(clientId);
 
       if (ifFailTryAgain == null || ifFailTryAgain)
         clientInfo.pendingMessages.push(new PendingMessage({

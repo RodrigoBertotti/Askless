@@ -236,16 +236,11 @@ export class ServerInternalImp {
   config: IServerConfiguration;
   _logger: Logger;
   allRoutes: Array<Route> = [];
-  readonly disconnectClientsWhoDidntPingTask = new DisconnectClientsWhoDidntPingTask(
-    this
-  );
   clientMiddleware: ClientMiddleware;
-  readonly sendMessageToClientAgainTask: SendMessageToClientAgainTask = new SendMessageToClientAgainTask(
-    this
-  );
-  readonly clearRuntimeDataFromDisconnectedClientTask: ClearRuntimeDataFromDisconnectedClientTask = new ClearRuntimeDataFromDisconnectedClientTask(
-    this
-  );
+
+  readonly disconnectClientsWhoDidntPingTask = new DisconnectClientsWhoDidntPingTask(this);
+  readonly sendMessageToClientAgainTask: SendMessageToClientAgainTask = new SendMessageToClientAgainTask(this);
+  readonly clearRuntimeDataFromDisconnectedClientTask: ClearRuntimeDataFromDisconnectedClientTask = new ClearRuntimeDataFromDisconnectedClientTask(this);
 
   private validateSetDefaultValuesInitConfig(
     config: IServerConfiguration
@@ -588,10 +583,7 @@ export class AsklessServer {
     if (ownClientId == null)
       throw Error("You cannot disconnect a client without an App generated ID");
     try {
-      const clientInfo:ClientInfo = this.server.clientMiddleware.clients.getClientInfo(ownClientId);
-      if(clientInfo?.doWsDisconnect) {
-        clientInfo.doWsDisconnect();
-      }
+      this.server.clientMiddleware.clients.getOrCreateClientInfo(ownClientId)?.doWsDisconnect?.();
     } catch (e) {
       this.server.logger("Could not disconnect the client " + ownClientId, "error", e.stack);
     }

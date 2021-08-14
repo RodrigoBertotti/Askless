@@ -25,10 +25,11 @@ export class PendingMessage {
   onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
   onClientFailsToReceive?: OnClientFailsToReceive;
 
+  ///TODO: unit test
   canBeRemovedFromQueue(secondsToStopTryingToSendMessageAgainAndAgain?:number):boolean {
     return secondsToStopTryingToSendMessageAgainAndAgain != null &&
            secondsToStopTryingToSendMessageAgainAndAgain >= 1    &&
-           this.firstTryAt + secondsToStopTryingToSendMessageAgainAndAgain * 1000 >= Date.now();
+           this.firstTryAt + secondsToStopTryingToSendMessageAgainAndAgain * 1000 < Date.now();
   }
 
   constructor(params:{
@@ -50,22 +51,36 @@ export type RouteBeingListen = {
   listenId: string;
   query;
 };
-/** @internal */
+/** @internal */ //TODO: apagar ClientInfo caso estiver sobrando em runtime
 export class ClientInfo {
   pendingMessages: Array<PendingMessage> = [];
   onClose: VoidFunction;
   lastClientRequestList: LastClientRequest[] = [];
-  disconnectedAt?: number = undefined;
+  disconnectedAt?: number;
   sendMessage?: SendMessageToClientCallback;
   headers?: object;
   doWsDisconnect?: VoidFunction;
   routesBeingListen: Array<RouteBeingListen> = [];
   clientType: "flutter" | "javascript";
-  constructor(public readonly clientId: string | number) {}
+  readonly createdAt:number = Date.now();
+
+  constructor(public readonly clientId: string | number, public readonly server:ServerInternalImp) {}
 
   canBeDeleted(intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient:number) : boolean{
-    return this.disconnectedAt != null &&
-        this.disconnectedAt + intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient * 1000 < Date.now();
+    if( //websocket connection haven't been performed
+        this.disconnectedAt == null &&
+        this.sendMessage == null &&
+        this.doWsDisconnect == null &&
+        this.onClose == null &&
+        this.createdAt + (20 * 1000) < Date.now()
+    ){
+      this.server.logger("deleting client data that haven't been used", "debug");
+      return true;
+    }
+
+    return this.disconnectedAt != null && (
+        this.disconnectedAt + intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient * 1000 < Date.now()
+    );
   }
 }
 /** @internal */
@@ -78,10 +93,10 @@ export class Clients {
   constructor(public readonly server: ServerInternalImp) {}
 
   setHeaders(clientId: string | number, headers) {
-    this.getClientInfo(clientId).headers = headers;
+    this.getOrCreateClientInfo(clientId).headers = headers;
   }
   getHeaders(clientId: string | number): object|undefined {
-    return this.getClientInfo(clientId).headers;
+    return this.getOrCreateClientInfo(clientId).headers;
   }
 
   stopListening(clientInfo: ClientInfo, listenId: string) {
@@ -133,10 +148,10 @@ export class Clients {
     return this.clientId_clientInfo;
   }
 
-  getClientInfo(clientId: number | string): ClientInfo {
+  getOrCreateClientInfo(clientId: number | string): ClientInfo {
     let res = this.clientId_clientInfo[clientId] as ClientInfo;
     if (!res)
-      res = this.clientId_clientInfo[clientId] = new ClientInfo(clientId);
+      res = this.clientId_clientInfo[clientId] = new ClientInfo(clientId, this.server);
     return res;
   }
 
@@ -155,7 +170,8 @@ export class Clients {
           .getReadRoute(routeBeingListen.route)
           .stopListening(clientId);
       }
-      if (clientInfo.doWsDisconnect) clientInfo.doWsDisconnect();
+      if (clientInfo.doWsDisconnect)
+        clientInfo.doWsDisconnect();
       delete this.clientId_clientInfo[clientId];
     });
   }

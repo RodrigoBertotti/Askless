@@ -8,7 +8,8 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
     super(server);
   }
 
-  run() {
+  //override
+  protected run() {
     const clientsId_clientInfo = this.server?.clientMiddleware?.clients?.getAllClientsInfos();
     if (!this.server?.wss) {
       this.server.logger("SendMessageToClientAgainTask: this.server?.clientMiddleware?.clients?.getAllClientsInfos() IS NULL", "error");
@@ -42,14 +43,8 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
         }
       });
 
-      for (
-        let i = 0;
-        i <
-        removePendingMessageThatClientShouldReceiveList_clientId_serverId.length;
-        i++
-      ) {
-        const re =
-          removePendingMessageThatClientShouldReceiveList_clientId_serverId[i];
+      for (let i = 0; i < removePendingMessageThatClientShouldReceiveList_clientId_serverId.length; i++) {
+        const re = removePendingMessageThatClientShouldReceiveList_clientId_serverId[i];
         this.server.clientMiddleware.clients.removePendingMessage(
           re.clientId,
           false,

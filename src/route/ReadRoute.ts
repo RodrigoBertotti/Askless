@@ -1,5 +1,5 @@
 import { ClientInfo, RouteBeingListen } from "../client_middleware/Clients";
-import { Utils } from "../client/Utils";
+import {getOwnClientId,} from "../Utils";
 import {
   ResponseCli,
   ServerConfirmReceiptCli,
@@ -436,7 +436,7 @@ abstract class _ReadRoute {
                 //Check if the client will receive the response
                 output: response.output,
                 query: routeClientListeningByThisClientArray[r].query,
-                ownClientId: Utils.getOwnClientId(clientId),
+                ownClientId: getOwnClientId(clientId),
                 headers: this.server.clientMiddleware.clients.getHeaders(clientId) ?? {},
               })) || ({} as RealtimeOutputHandlerResult); //<--- LINK_PROJECT_RealtimeOutputHandlerCHANGED: remover || ( {} as RealtimeOutputHandler)
 
@@ -497,17 +497,17 @@ abstract class _ReadRoute {
     query: object,
     headers: object|undefined,
     listenId: string
-  ): Promise<any> {
+  ): Promise<String|undefined> {
     // if(this.clientIsAlreadyListeningTo(listenId)){
     //   this.server.logger("server is already server the client listening request about listenId:"+listenId+" & clientRequestId: "+clientRequestId, "debug");
     //   return;
     // }
     const self = this;
-    return new Promise(async (resolve, reject) => {
+    return new Promise<String|undefined>(async (resolve, reject) => {
       self.stopListening(clientId, listenId, self.route);
 
-      const clientInfo = self.server.clientMiddleware.clients.getClientInfo(clientId);
-      // const start = new Date().getTime();
+      const clientInfo = self.server.clientMiddleware.clients.getOrCreateClientInfo(clientId);
+      // const start = Date.now();
 
       clientInfo.routesBeingListen.push({
         clientId: clientId,
@@ -516,64 +516,10 @@ abstract class _ReadRoute {
         query: query,
       });
 
-      // const WAIT = 1000; //After the listen started, wait one second to send the initial data
-      const callback = async (output, error: boolean) => {
-        // const difference = new Date().getTime() - start;
-        let successAndNowIsListening: boolean = true;
-        // if (difference < WAIT) await Utils.delay(WAIT - difference);
-        if (error) {
-          self.server.logger("listen: READ error", "error", output);
 
-          if (output.code == RespondErrorCode.PERMISSION_DENIED) {
-            self.server.logger("listen: the error is PERMISSION_DENIED, calling stopListening...", "error", output);
-            self.stopListening(clientId, listenId, self.route);
-            successAndNowIsListening = false;
-            self.server.clientMiddleware.assertSendDataToClient(
-              clientId,
-              new ResponseCli(clientRequestId, null, output),
-              true,
-                undefined,
-                undefined
-            );
-          } else {
-            self.server.clientMiddleware.assertSendDataToClient(
-              clientId,
-              new ResponseCli(clientRequestId, listenId),
-              true,
-                undefined,
-                undefined
-            );
-          }
-        } else {
-          self.server.clientMiddleware.assertSendDataToClient(
-            clientId,
-            new ResponseCli(clientRequestId, listenId),
-            true,
-            undefined,
-            undefined
-          );
-          self.server.clientMiddleware.assertSendDataToClient(
-            clientId,
-            new NewDataForListener(output?.output, listenId),
-            true,
-            output?.onClientSuccessfullyReceives,
-            output?.onClientFailsToReceive
-          );
-        }
-
-        if (successAndNowIsListening)
-          self.onClientStartsListening({
-            route: self.route,
-            ownClientId: Utils.getOwnClientId(clientId),
-          });
-        else
-          self.server.logger("onClientStartsListening not called successAndNowIsListening : " + successAndNowIsListening.toString(), "error");
-
-        resolve(successAndNowIsListening ? listenId : null);
-      };
       const response = await self.readInternal({
         query: query,
-        ownClientId: Utils.getOwnClientId(clientId),
+        ownClientId: getOwnClientId(clientId),
         headers: self.server.clientMiddleware.clients.getHeaders(clientId),
       });
       if (
@@ -587,19 +533,59 @@ abstract class _ReadRoute {
             " must be an instance of Success or RespondError"
         );
 
+      const listenCallbackError = async (output, resolve:Function) => {
+        self.server.logger("listen: READ error", "error", output);
+        self.server.clientMiddleware.assertSendDataToClient(
+            clientId,
+            new ResponseCli(clientRequestId, null, output),
+            true,
+            undefined,
+            undefined
+        );
+        if (output?.code == RespondErrorCode.PERMISSION_DENIED) {
+          self.server.logger("listen: the error is PERMISSION_DENIED, calling stopListening...", "error", output);
+          self.stopListening(clientId, listenId, self.route);
+          self.server.logger("onClientStartsListening not called", "error");
+        }
+        resolve(undefined);
+      };
+      const listenCallbackSuccess = async (output) => {
+        self.server.clientMiddleware.assertSendDataToClient(
+            clientId,
+            new ResponseCli(clientRequestId, listenId),
+            true,
+            undefined,
+            undefined
+        );
+        self.server.clientMiddleware.assertSendDataToClient(
+            clientId,
+            new NewDataForListener(output?.output, listenId),
+            true,
+            output?.onClientSuccessfullyReceives,
+            output?.onClientFailsToReceive
+        );
+
+        self.onClientStartsListening({
+          route: self.route,
+          ownClientId: getOwnClientId(clientId),
+        });
+        resolve(listenId);
+      };
+
+
       if (response instanceof RespondError) {
-        await callback(
-          response.code == null
-            ? {
-                code: RespondErrorCode.INTERNAL_ERROR,
-                description: response?.description,
-                stack: response?.stack,
-              }
-            : response,
-          true
+        await listenCallbackError(
+        response.code != null
+           ? response
+           : {
+               code: RespondErrorCode.INTERNAL_ERROR,
+               description: response?.description,
+               stack: response?.stack,
+           },
+           resolve,
         );
       } else {
-        await callback(response as RespondSuccess, false);
+        await listenCallbackSuccess(response as RespondSuccess);
       }
     });
   }
@@ -627,7 +613,7 @@ abstract class _ReadRoute {
     if (listenId == null && route != null)
       throw Error("please, inform the listenId");
 
-    const clientInfo = this.server.clientMiddleware.clients.getClientInfo(clientId);
+    const clientInfo = this.server.clientMiddleware.clients.getOrCreateClientInfo(clientId);
 
     let remove: Array<RouteBeingListen> = [];
     if (listenId) {
@@ -641,7 +627,7 @@ abstract class _ReadRoute {
     remove.forEach(async (p) => {
       await this.onClientStopsListening({
         route: p.route,
-        ownClientId: Utils.getOwnClientId(p.clientId),
+        ownClientId: getOwnClientId(p.clientId),
       });
     });
     remove.forEach((r) => {

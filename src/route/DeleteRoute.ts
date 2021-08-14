@@ -42,7 +42,7 @@ export abstract class DeleteRoute {
   public abstract delete(context: DeleteRouteContext): void;
 
   /** @internal */
-  public deleteInternal(context) : Promise<RespondSuccess | RespondError>{
+  public deletePromise(context) : Promise<RespondSuccess | RespondError>{
     return new Promise((resolve) => {
       this.delete({
         headers: context.headers,

@@ -1,9 +1,9 @@
 import { Callback, Listen, ModificationType, RequestType } from "./Types";
-import { Utils } from "./Utils";
+import {makeId} from "../Utils";
 
 /** @internal */
 export abstract class AbstractRequestCli {
-  public readonly clientRequestId = Utils.makeId(10); //Tanto para o cliente, quanto para o servidor (mesma implementação nos 2 lados --->) será usado para 2 motivos: 1) confirmar recebimento de informação (3 vezes) ... 2) Caso o 1 falhar, evitar que seja recebido 2 vezes a mesma informação.
+  public readonly clientRequestId = makeId(10); //Tanto para o cliente, quanto para o servidor (mesma implementação nos 2 lados --->) será usado para 2 motivos: 1) confirmar recebimento de informação (3 vezes) ... 2) Caso o 1 falhar, evitar que seja recebido 2 vezes a mesma informação.
 
   protected constructor(public requestType: RequestType) {}
 }

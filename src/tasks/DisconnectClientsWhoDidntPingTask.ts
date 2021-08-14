@@ -10,7 +10,8 @@ export class DisconnectClientsWhoDidntPingTask extends AbstractTimedTask {
     super(server);
   }
 
-  run() {
+  //override
+  protected run() {
     if (!this.server?.wss) {
       this.server.logger("DisconnectClientsWhoDidntPingTask: this.server?.wss IS NULL", "error");
       return;

@@ -15,7 +15,7 @@ export abstract class AbstractTimedTask {
 
   protected constructor(public readonly server: ServerInternalImp) {}
 
-  abstract run();
+  protected abstract run();
 
   start(intervalMs: number) {
     if (this._started) this.stop();
