@@ -10,12 +10,13 @@ export class ConfigureConnectionRequestHandler {
 
     constructor(public readonly internalServerImp: ServerInternalImp) {}
 
-    async handle(_input:object, clientWsEndpoint:WebSocket) : Promise<void> {
-        const input = Object.assign(new ConfigureConnectionRequestCli(null,null), _input) as ConfigureConnectionRequestCli;
+    async handle(input, clientWsEndpoint:WebSocket) : Promise<void> {
+        input = Object.assign({}, input) as ConfigureConnectionRequestCli;
         const ownClientIdOrNull = getOwnClientId(input.clientId);
         if (
             ownClientIdOrNull != null &&
-            !(await this.internalServerImp.config.grantConnection?.call(ownClientIdOrNull, input.headers))
+            this.internalServerImp.config.grantConnection &&
+            !(await this.internalServerImp.config.grantConnection(ownClientIdOrNull, input.headers))
         ) {
             throw new ServerError(
                 "The client " +
