@@ -20,7 +20,7 @@ export class ClearRuntimeDataFromDisconnectedClientTask extends AbstractTimedTas
       }
       const clientInfo = clientsId_clientInfo[clientId] as ClientInfo;
       if (clientInfo.canBeDeleted((this.server.config??{})["intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient"])) {
-        this.server.logger("Cleaning data from disconnected user " + clientId, "debug", clientInfo);
+        this.server.logger("Cleaning data from disconnected user " + clientId, "debug");
         this.server.clientMiddleware.clients.deleteClientsInfos([
           clientId,
         ]);
