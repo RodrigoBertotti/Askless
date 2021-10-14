@@ -109,7 +109,7 @@ class DeleteProductRoute extends askless.DeleteRoute {
     //override
     async delete(context){
         if(context.ownClientId==null) {
-            context.respondSuccess({
+            context.respondError({
                 code: askless.RespondErrorCode.PERMISSION_DENIED,
                 description: 'Only logged users can delete',
                 stack: null
