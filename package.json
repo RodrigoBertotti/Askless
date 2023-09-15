@@ -1,6 +1,6 @@
 {
   "name": "askless",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A coherent Node.js Backend for Flutter. Askless is a framework to build websocket servers for Flutter Apps that lets you update your widgets in realtime by streaming data changes with WebSockets. Create your Flutter App without Firebase, with MySQL, PostgreSQL, or any database you want, handle WebSocket authentication, and quickly add audio and video calls with WebRTC!",
   "keywords": [
     "flutter",

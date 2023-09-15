@@ -1,6 +1,6 @@
 import {AsklessServer} from "../../src";
 import {MessageModel} from "./message-model";
-import {MessageEntity} from "./message-entity"; // TODO: import
+import {MessageEntity} from "./message-entity";
 
 const server = new AsklessServer<"blue" | "green">();
 const isProduction = false;

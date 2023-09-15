@@ -6,7 +6,7 @@
     "outDir": "dist/askless",
     "moduleResolution": "node",
     "stripInternal": true,
-    "strictNullChecks": true
+    "strictNullChecks": false
   },
   "exclude": [
     "node_modules",
