@@ -7,7 +7,7 @@ This is the server side in Node.js,
 
 ## Built with Askless
 
-[//]: # (TODO VIDEO)
+https://github.com/RodrigoBertotti/Askless/assets/15431956/ea701f18-f1a5-422d-be5f-51042894f073
 
 ## Important links
 *  [Askless Backend in Node.js](https://github.com/RodrigoBertotti/askless) the backend side of this Flutter client
