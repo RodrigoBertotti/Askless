@@ -1,73 +1,61 @@
 import {
-  AbstractRequestCli,
+  AuthenticateRequestCli,
   ClientConfirmReceiptCli,
   ConfigureConnectionRequestCli,
-  ReadCli,
   ListenCli,
   ModifyCli,
+  ReadCli,
 } from "../../../../client/RequestCli";
 import {
-  ServerInternalImp,
+  AsklessError,
+  AsklessErrorCode, AsklessServer, CreateRouteContext, DeleteRouteContext, AuthenticateUserContext, ReadRouteContext,
   ServerError,
-  ws_clientId,
-  ws_clientType,
-  RespondError,
-  RespondSuccess,
-  ws_isAlive
+  UpdateRouteContext,
+  ws_clientIdInternalApp, ws_clientType
 } from "../../../../index";
-import {
-  CrudRequestType,
-  RespondErrorCode,
-  RequestType,
-} from "../../../../client/Types";
-import {
-  ConfigureConnectionResponseCli,
-  ResponseCli,
-} from "../../../../client/response/OtherResponses";
-import { PingPong } from "../../../../client/PingPong";
+import {CrudRequestType, RequestType,} from "../../../../client/Types";
+import {AsklessResponse,} from "../../../../client/response/OtherResponses";
+import {PingPong} from "../../../../client/PingPong";
 import {ClientInfo, LastClientRequest} from "../../../Clients";
-import { DeleteRoute } from "../../../../route/DeleteRoute";
-import { CreateRoute } from "../../../../route/CreateRoute";
-import { UpdateRoute } from "../../../../route/UpdateRoute";
-import { ReadRoute } from "../../../../route/ReadRoute";
+import {DeleteRoute} from "../../../../route/DeleteRoute";
+import {CreateRoute} from "../../../../route/CreateRoute";
+import {UpdateRoute} from "../../../../route/UpdateRoute";
+import {ReadRoute, SetEntityGetter} from "../../../../route/ReadRoute";
 import {ConfigureConnectionRequestHandler} from "./ConfigureConnectionRequestHandler";
+import {AsklessSuccess} from "../../../../client/response/RespondSuccess";
 import WebSocket = require("ws");
-import {getOwnClientId} from "../../../../Utils";
+import {AuthenticateRequestHandler} from "./AuthenticateRequestHandler";
 
 /** @internal */
 export class ReceiveMessageHandler {
-  constructor(public readonly internalServerImp: ServerInternalImp) {}
+  constructor(public readonly askless: AsklessServer) {}
 
-  readonly configureConnectionHandler = new ConfigureConnectionRequestHandler(this.internalServerImp);
+  readonly configureConnectionHandler = new ConfigureConnectionRequestHandler(this.askless);
+  readonly authenticateHandler = new AuthenticateRequestHandler(this.askless);
 
   async handleClientRequestInput(_input, clientWsEndpoint:WebSocket) {
-    clientWsEndpoint[ws_isAlive] = true;
-
-    if (_input && _input[PingPong.type] != null) {
-      //is ping from client
-      await this.handlePingFromClient(_input, clientWsEndpoint[ws_clientId]);
-      return;
-    }
-
-    if (!_input && _input.clientRequestId) {
-      // noinspection ExceptionCaughtLocallyJS
-      console.error(JSON.stringify(_input));
-      throw Error("Invalid request, no clientRequestId");
-    }
-
     if (_input && _input[ConfigureConnectionRequestCli.type] != null) {
       await this.configureConnectionHandler.handle(_input, clientWsEndpoint);
       return;
     }
 
-    const clientInfo:ClientInfo = this.internalServerImp.clientMiddleware.clients.getOrCreateClientInfo(clientWsEndpoint[ws_clientId]);
+    if (_input && _input[AuthenticateRequestCli.type] != null) {
+      await this.authenticateHandler.handle(_input, clientWsEndpoint);
+      return;
+    }
+
+    if (clientWsEndpoint[ws_clientIdInternalApp] == null) {
+      throw Error("Ops, it should perform configure connection first -> "+JSON.stringify(_input));
+    }
+
+    const clientInfo:ClientInfo = this.askless.clientMiddleware.clients.getOrCreateClientInfo(clientWsEndpoint[ws_clientIdInternalApp]);
 
     if(this.checkIfHasProblemAfterConfigureConnection(_input, clientWsEndpoint, clientInfo)){
       return;
     }
 
     if (_input[ClientConfirmReceiptCli.type] != null) {
-      this.internalServerImp.clientMiddleware.clients.removePendingMessage(clientWsEndpoint[ws_clientId], true, _input.serverId);
+      this.askless.clientMiddleware.clients.removePendingMessage(clientWsEndpoint[ws_clientIdInternalApp], true, _input.serverId);
       return;
     }
 
@@ -75,86 +63,15 @@ export class ReceiveMessageHandler {
       _input: _input,
       clientWsEndpoint: clientWsEndpoint,
       clientInfo: clientInfo,
-      internalServerImp: this.internalServerImp,
+      askless: this.askless,
     }).handle();
 }
 
 
-  // private permissionDenied(
-  //   data: ReadCli | ModifyCli,
-  //   clientId?: string | number
-  // ): ServerError {
-  //   return new ServerError(
-  //     (clientId != null ? "Unknown" : clientId) +
-  //       " clientId don't have permission to " +
-  //       data.requestType.toString() +
-  //       ": " +
-  //       data.route +
-  //       "/" +
-  //       data.route,
-  //     RespondErrorCode.PERMISSION_DENIED
-  //   );
-  // }
-  //
-  public async handlePingFromClient(pingClient: PingPong, clientId?: string | number) {
-    if (!clientId) {
-      this.internalServerImp.logger("Ignoring handlePingFromClient because clientId is null", "error");
-      return;
-    }
-    const clientInfoServer = this.internalServerImp.clientMiddleware.clients.getOrCreateClientInfo(clientId);
-
-    if (clientInfoServer.sendMessage != null)
-      clientInfoServer.sendMessage("pong");
-    else
-      this.internalServerImp.logger('handlePingFromClient: Could not send the "pong" to client', "error");
-
-    const routesThatClientDoesntListenAnymoreAndCanBeRemovedFromServer = clientInfoServer.routesBeingListen.filter(
-      (routeBeingListen) => {
-        return (
-          pingClient.listeningToRoutes.find(
-            (listeningToRoute) =>
-              listeningToRoute.listenId == routeBeingListen.listenId
-          ) == null
-        );
-      }
-    );
-    routesThatClientDoesntListenAnymoreAndCanBeRemovedFromServer.forEach(
-      (clientListeningToRoutes) => {
-        this.internalServerImp.clientMiddleware.clients.stopListening(
-          clientInfoServer,
-          clientListeningToRoutes.listenId
-        );
-      }
-    );
-
-    const routesThatServerDoesntSendToClientAnymoreButServerShould = pingClient.listeningToRoutes.filter(
-      (clientListeningToRoutes) => {
-        return (
-          clientInfoServer.routesBeingListen.find(
-            (routeBeingListen) =>
-              routeBeingListen.listenId == clientListeningToRoutes.listenId
-          ) == null
-        );
-      }
-    );
-    routesThatServerDoesntSendToClientAnymoreButServerShould.forEach(
-      (listen) => {
-        const service = this.internalServerImp.getReadRoute(listen.route);
-
-        service.listen(
-          clientId,
-          listen.clientRequestId,
-          listen.query,
-          clientInfoServer.headers,
-          listen.listenId
-        );
-      }
-    );
-  }
 
   private checkIfHasProblemAfterConfigureConnection(_input, clientWsEndpoint:WebSocket, clientInfo:ClientInfo) : boolean{
-    if (clientWsEndpoint[ws_clientId] == null) {
-      this.internalServerImp.logger("clientId is undefined: " + JSON.stringify(_input), "debug");
+    if (clientWsEndpoint[ws_clientIdInternalApp] == null) {
+      this.askless.logger("clientId is undefined: " + JSON.stringify(_input), "error");
       return true;
     }
 
@@ -163,11 +80,6 @@ export class ReceiveMessageHandler {
     if (_input.clientRequestId == null)
       throw Error("Unknown _input (do not have clientRequestId)");
 
-    if (clientInfo.headers == null && _input[ConfigureConnectionRequestCli.type] == null) {
-      //Is not possible to execute any operation BEFORE setting the headers
-      this.internalServerImp.logger("Is not possible to execute any operation BEFORE setting the headers", "error", _input);
-      return true;
-    }
 
     return false;
   }
@@ -177,7 +89,7 @@ abstract class _RunOperationInApp{
 
   protected constructor(
       public readonly paramsSuper:{
-        readonly internalServerImp:ServerInternalImp,
+        readonly askless:AsklessServer,
         readonly clientInfo:ClientInfo,
         readonly _input:object,
         readonly clientWsEndpoint:WebSocket,
@@ -186,21 +98,19 @@ abstract class _RunOperationInApp{
   ) {}
 
   static from(params: {
-    readonly internalServerImp: ServerInternalImp,
+    readonly askless: AsklessServer,
     readonly clientInfo: ClientInfo,
     readonly _input,
     readonly clientWsEndpoint: WebSocket,
   }) : _RunOperationInApp{
-
-    if (params.clientInfo.headers == null)
-      throw new ServerError(
-          "You need to configure the headers first",
-          RespondErrorCode.NEED_CONFIGURE_HEADERS
-      );
-    else if (params._input[ReadCli.type] != null)
+    if (params._input[ReadCli.type] != null)
       return new _RunReadOperationInApp(params);
-    else if (params._input[ListenCli.type] != null)
+    else if (params._input[ListenCli.type] != null) {
+      if (params.clientWsEndpoint[ws_clientIdInternalApp] == null) {
+        throw Error("params.clientWsEndpoint[ws_clientIdInternalApp] is null");
+      }
       return new _RunListenOperationInApp(params);
+    }
     else if (params._input[ModifyCli.type] != null)
       return new _RunModifyOperationInApp(params);
     else
@@ -210,28 +120,26 @@ abstract class _RunOperationInApp{
   async handle() : Promise<void>{
     const requestAlreadyReceivedFromClientBefore: LastClientRequest|undefined = this.paramsSuper.clientInfo.lastClientRequestList.find((c: LastClientRequest) => c.clientRequestId == this.paramsSuper._input['clientRequestId']);
     if (requestAlreadyReceivedFromClientBefore) {
-      this.paramsSuper.internalServerImp.logger("handleClientRequestInput: request already receipt: " + this.paramsSuper._input['clientRequestId'] + " from clientId=" + this.paramsSuper.clientWsEndpoint[ws_clientId], "debug");
+      this.paramsSuper.askless.logger("handleClientRequestInput: request already receipt: " + this.paramsSuper._input['clientRequestId'] + " from clientId=" + this.paramsSuper.clientWsEndpoint[ws_clientIdInternalApp], "debug");
       requestAlreadyReceivedFromClientBefore.requestReceivedAt = Date.now();
       return;
     }
 
-    if (!this.paramsSuper.clientInfo.pendingMessages)
-      this.paramsSuper.clientInfo.pendingMessages = [];
-
+    if (!this.paramsSuper.clientInfo.pendingMessages) { this.paramsSuper.clientInfo.pendingMessages = []; }
     this.paramsSuper.clientInfo.lastClientRequestList.push(new LastClientRequest(this.paramsSuper._input['clientRequestId']));
 
     this.cleanUnnecessaryInfoFromClient(this.paramsSuper.clientInfo);
 
     const clientRequestId = this.paramsSuper._input['clientRequestId'];
     if (clientRequestId) {
-      this.paramsSuper.internalServerImp.clientMiddleware.confirmReceiptToClient(this.paramsSuper.clientWsEndpoint[ws_clientId], clientRequestId); //Tem que vir depois da chamada do método onHeadersRequestCallback(..) pois não é possível enviar mensagens antes desse método ser chamado
+      this.paramsSuper.askless.clientMiddleware.confirmReceiptToClient(this.paramsSuper.clientWsEndpoint[ws_clientIdInternalApp], clientRequestId);
     }
     await this.paramsSuper.handleSubImplementation();
   }
 
   private cleanUnnecessaryInfoFromClient(clientInfo:ClientInfo) {
     if (clientInfo.lastClientRequestList.length > 100) {
-      this.paramsSuper.internalServerImp.logger("handleClientRequestInput: Start of removing unnecessary info's of user " + clientInfo.clientId + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
+      this.paramsSuper.askless.logger("handleClientRequestInput: Start of removing unnecessary info's of user " + clientInfo.clientIdInternalApp + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
       const remove = Array<LastClientRequest>();
       for (
           let i = clientInfo.lastClientRequestList.length - 1;
@@ -246,7 +154,7 @@ abstract class _RunOperationInApp{
       clientInfo.lastClientRequestList = clientInfo.lastClientRequestList.filter(
           (req) => req && !remove.includes(req)
       );
-      this.paramsSuper.internalServerImp.logger("handleClientRequestInput: End of removing unnecessary info's of user " + clientInfo.clientId + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
+      this.paramsSuper.askless.logger("handleClientRequestInput: End of removing unnecessary info's of user " + clientInfo.clientIdInternalApp + "... (" + clientInfo.lastClientRequestList.length + ")", "debug");
     }
   }
 }
@@ -255,7 +163,7 @@ class _RunModifyOperationInApp extends _RunOperationInApp {
 
   constructor(
       public readonly params: {
-        readonly internalServerImp: ServerInternalImp,
+        readonly askless: AsklessServer,
         readonly clientInfo: ClientInfo,
         readonly _input,
         readonly clientWsEndpoint: WebSocket,
@@ -268,62 +176,80 @@ class _RunModifyOperationInApp extends _RunOperationInApp {
           clientInfo: params.clientInfo,
           handleSubImplementation: async () => await this.modify(
               params._input,
-              params.clientWsEndpoint[ws_clientId],
-              params.clientInfo.headers!
+              params.clientWsEndpoint[ws_clientIdInternalApp],
+              params.clientInfo
           ),
-          internalServerImp: params.internalServerImp,
+          askless: params.askless,
         }
     );
   }
 
   private async modify(
       data: ModifyCli,
-      clientId: string | number,
-      headers: object
+      clientIdInternalApp: string,
+      clientInfo: ClientInfo
   ) {
-    const route = this.params.internalServerImp.getRoute(data.route, data.requestType as any) as CreateRoute | UpdateRoute | DeleteRoute;
+    const route = this.params.askless.getRoute(data.route, data.requestType as any) as CreateRoute<any, any, AuthenticateUserContext<any>> | UpdateRoute<any, any, AuthenticateUserContext<any>> | DeleteRoute<any, any, AuthenticateUserContext<any>>;
+    const locals = Object.assign({}, clientInfo.locals);
+    let _getEntity: () => any;
 
-    const params = {
+    const params: CreateRouteContext & UpdateRouteContext & DeleteRouteContext & AuthenticateUserContext<any> & SetEntityGetter<any> = {
       body: data.body,
-      headers: headers,
-      ownClientId: getOwnClientId(clientId),
-      query: data.query,
+      userId: clientInfo.userId,
+      claims: clientInfo.claims,
+      params: data.params,
+      locals: locals,
+      errorCallback: null,
+      successCallback: null,
+      setEntityGetter: getEntity => { _getEntity = getEntity; }
     };
-    let res;
-    if (data.requestType == RequestType.DELETE)
-      res = await (route as DeleteRoute).deletePromise(params);
-    else if (data.requestType == RequestType.CREATE)
-      res = await (route as CreateRoute).createPromise(params);
-    else if (data.requestType == RequestType.UPDATE)
-      res = await (route as UpdateRoute).updatePromise(params);
-    else
-      throw Error("Nothing to data.requestType:" + data.requestType);
-
-    if (res == null || (!(res instanceof RespondError) && !(res instanceof RespondSuccess)))
+    let res: AsklessError | AsklessSuccess;
+    if (route.authenticationStatus == "authenticatedOnly" && clientInfo.authentication != "authenticated") {
+      res = new AsklessError({
+        code: AsklessErrorCode.PENDING_AUTHENTICATION,
+        description: "Could not perform the operation on ("+route.requestType+") \""+route.route+"\" because authentication is required",
+      });
+    } else if (data.requestType == RequestType.DELETE) {
+      res = await (route as DeleteRoute<any, any, AuthenticateUserContext<any>>).deletePromise(params);
+    } else if (data.requestType == RequestType.CREATE) {
+      res = await (route as CreateRoute<any, any, AuthenticateUserContext<any>>).createPromise(params);
+    } else if (data.requestType == RequestType.UPDATE) {
+      res = await (route as UpdateRoute<any, any, AuthenticateUserContext<any>>).updatePromise(params);
+    } else {
+      throw Error("Nothing to data.requestType: " + data.requestType);
+    }
+    if (res == null || (!(res instanceof AsklessError) && !(res instanceof AsklessSuccess)))
       throw Error(
           "response of " +
           data.requestType +
           " " +
           data.route +
-          "  must be an instance of RespondSuccess or RespondError"
+          "  must be an instance of AsklessSuccess or AsklessError"
       );
 
-    if (res instanceof RespondError) {
-      this.params.internalServerImp.clientMiddleware.assertSendDataToClient(
-          clientId,
-          new ResponseCli(data.clientRequestId, null, res),
+
+    if (res instanceof AsklessError) {
+      if (clientInfo.authentication != "authenticated" && (res.code == AsklessErrorCode.PERMISSION_DENIED || res.code == AsklessErrorCode.PENDING_AUTHENTICATION)) {
+        this.params.askless.logger("respondWithError: the client \""+(clientInfo.userId ?? " (no ID) ")+"\" " +
+            "could not perform the operation on (" + data.requestType + ")" + data.route + ", result is "+res.code+
+            ", authentication is \""+clientInfo.authentication+"\", did you handle the onUnauthenticatedListener on the App side? (initAndConnect)", "warning");
+      }
+
+      this.params.askless.clientMiddleware.assertSendDataToClient(
+          clientIdInternalApp,
+          new AsklessResponse(data.clientRequestId, null, res),
           true,
-          undefined,
-          undefined
+          null,
       );
     } else {
-      res = res as RespondSuccess;
-      this.params.internalServerImp.clientMiddleware.assertSendDataToClient(
-          clientId,
-          new ResponseCli(data.clientRequestId, res?.output),
+      res = res as AsklessSuccess;
+      this.params.askless.clientMiddleware.assertSendDataToClient(
+          clientIdInternalApp,
+          new AsklessResponse(data.clientRequestId, res?.output),
           true,
-          res?.onClientSuccessfullyReceives,
-          res?.onClientFailsToReceive
+          () => {
+            return route.onReceived(_getEntity(), {userId: params.userId, claims: params.claims, params: params.params, locals: locals, })
+          },
       );
     }
   }
@@ -335,7 +261,7 @@ class _RunListenOperationInApp extends _RunOperationInApp{
 
   constructor(
       public readonly params: {
-        readonly internalServerImp: ServerInternalImp,
+        readonly askless: AsklessServer,
         readonly clientInfo: ClientInfo,
         readonly _input,
         readonly clientWsEndpoint: WebSocket,
@@ -346,31 +272,29 @@ class _RunListenOperationInApp extends _RunOperationInApp{
           _input: params._input,
           clientWsEndpoint: params.clientWsEndpoint,
           clientInfo: params.clientInfo,
-          handleSubImplementation: async () => await this.listen(this.params._input, this.params.clientWsEndpoint[ws_clientId], this.params.clientInfo.headers!),
-          internalServerImp: params.internalServerImp,
+          handleSubImplementation: async () => await this.listen(this.params._input, this.params.clientWsEndpoint[ws_clientIdInternalApp],),
+          askless: params.askless,
         }
     );
   }
 
   private async listen(
       data: ListenCli,
-      clientId: string | number,
-      headers: object
+      clientIdInternalApp: string,
   ) {
-    const service = this.params.internalServerImp.getRoute(
+    const service = this.params.askless.getRoute(
         data.route,
         CrudRequestType.READ
-    ) as ReadRoute;
+    ) as ReadRoute<any, any, AuthenticateUserContext<any>>;
     if (data.listenId == null) {
-      this.params.internalServerImp.logger("data.listenId == null", "error", data);
+      this.params.askless.logger("data.listenId == null", "error", data);
       throw Error("data.listenId == null");
     }
-
+    if (clientIdInternalApp == null) { throw Error("clientRequestId is null"); }
     await service.listen(
-        clientId,
+        clientIdInternalApp,
         data.clientRequestId,
-        data.query as any,
-        headers,
+        data.params as any,
         data.listenId
     );
   }
@@ -381,7 +305,7 @@ class _RunReadOperationInApp extends _RunOperationInApp{
 
   constructor(
       public readonly params: {
-        readonly internalServerImp: ServerInternalImp,
+        readonly askless: AsklessServer,
         readonly clientInfo: ClientInfo,
         readonly _input,
         readonly clientWsEndpoint: WebSocket,
@@ -392,57 +316,66 @@ class _RunReadOperationInApp extends _RunOperationInApp{
           _input: params._input,
           clientWsEndpoint: params.clientWsEndpoint,
           clientInfo: params.clientInfo,
-          handleSubImplementation: async () => await this.read(this.params._input, this.params.clientWsEndpoint[ws_clientId], this.params.clientInfo.headers!),
-          internalServerImp: params.internalServerImp,
+          handleSubImplementation: async () => await this.read(this.params._input, this.params.clientWsEndpoint[ws_clientIdInternalApp], this.params.clientInfo),
+          askless: params.askless,
         }
     );
   }
 
-  private async read(data: ReadCli, clientId: string | number, headers: object) {
-    const service = this.params.internalServerImp.getReadRoute(data.route);
+  private async read(data: ReadCli, clientIdInternalApp: string, clientInfo: ClientInfo) {
+    const service = this.params.askless.getReadRoute(data.route);
+    const locals = Object.assign({}, clientInfo.locals);
+    let _getEntity: () => any;
     let response = await service.readInternal({
-      headers: headers,
-      ownClientId: getOwnClientId(clientId),
-      query: data.query,
-    });
+      userId: clientInfo.userId,
+      claims: clientInfo.claims,
+      params: data.params,
+      locals: locals,
+      errorCallback: null,
+      successCallback: null,
+      setEntityGetter: (getEntity) => {_getEntity = getEntity;}
+    } as AuthenticateUserContext<any> & ReadRouteContext & SetEntityGetter<any>);
     if (
         response == null ||
-        (!(response instanceof RespondError) &&
-            !(response instanceof RespondSuccess))
+        (!(response instanceof AsklessError) &&
+            !(response instanceof AsklessSuccess))
     )
       throw Error(
           "response of read " +
           data.route +
-          " must be an instance of RespondSuccess or RespondError"
+          " must be an instance of AsklessSuccess or AsklessError"
       );
 
-    if (response instanceof RespondError) {
-      if (response.code == null)
-        this.params.internalServerImp.logger("respondWithError: read in " + data.route + "/" + data.route + " is null", "warning");
-      service.server.clientMiddleware.assertSendDataToClient(
-          clientId,
-          new ResponseCli(data.clientRequestId, null, response),
+    if (response instanceof AsklessError) {
+      if (response.code == null) {
+        this.params.askless.logger("respondWithError: read in " + data.route + "/" + data.route + " is null", "warning");
+      }
+      if (clientInfo.authentication != "authenticated" && (response.code == AsklessErrorCode.PERMISSION_DENIED || response.code == AsklessErrorCode.PENDING_AUTHENTICATION)) {
+        this.params.askless.logger("respondWithError: the client \""+(clientInfo.userId ?? "(no ID)")+"\" " +
+            "could not perform the operation on " + data.route + "/" + data.route + ", " +
+            "because his authentication is \""+clientInfo.authentication+"\", did you handle the onUnauthenticatedListener on the App side? (initAndConnect)", "warning");
+      }
+      service.askless.clientMiddleware.assertSendDataToClient(
+          clientIdInternalApp,
+          new AsklessResponse(data.clientRequestId, null, response),
           true,
           undefined,
-          undefined
       );
     } else {
-      response = response as RespondSuccess;
-      if (response == null || response.output == null)
-        this.params.internalServerImp.logger("respondWithSuccess: read in " + data.route + "/" + data.route + " is null", "warning");
-      service.server.clientMiddleware.assertSendDataToClient(
-          clientId,
-          new ResponseCli(data.clientRequestId, response?.output),
+      const responseSuccess = response as AsklessSuccess;
+      if (responseSuccess == null || responseSuccess.output == null) {
+        this.params.askless.logger("respondWithSuccess: read in " + data.route + "/" + data.route + " is null", "warning");
+      }
+      service.askless.clientMiddleware.assertSendDataToClient(
+          clientIdInternalApp,
+          new AsklessResponse(data.clientRequestId, responseSuccess?.output),
           true,
-          response?.onClientSuccessfullyReceives,
-          response?.onClientFailsToReceive
+          () => service.onReceived (
+              _getEntity(),
+              { userId: clientInfo.userId, locals: locals, claims: clientInfo.claims, params: data.params } as AuthenticateUserContext<any> & { params: object, locals: object }
+          ),
       );
     }
-    //if(output==null)
-    //    console.log('The readMethod: '+data.route+'/'+data.route+' returned null');
-
-    //if (await service.allowOutputForWhoWantRead(data.route, output, getOwnClientId(clientId), data.params as any, headers) == false)
-    //    throw this.permissionDenied(data,clientId);
   }
 
 }

@@ -1,11 +1,8 @@
 import {
-  ResponseCli,
+  AsklessResponse,
 } from "../client/response/OtherResponses";
-import {ServerInternalImp, SendMessageToClientCallback, NewDataForListener} from "../index";
-import {
-  OnClientFailsToReceive,
-  OnClientSuccessfullyReceives,
-} from "../route/ReadRoute";
+import {SendMessageToClientCallback, NewDataForListener, AsklessServer} from "../index";
+
 
 /** @internal */
 export class LastClientRequest {
@@ -20,53 +17,62 @@ export class LastClientRequest {
 }
 /** @internal */
 export class PendingMessage {
-  dataSentToClient: ResponseCli | NewDataForListener;
+  dataSentToClient: AsklessResponse | NewDataForListener;
   firstTryAt: number;
-  onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
-  onClientFailsToReceive?: OnClientFailsToReceive;
+  onClientReceiveOutputWithSuccess: () => void;
 
-  ///TODO: unit test
-  canBeRemovedFromQueue(secondsToStopTryingToSendMessageAgainAndAgain?:number):boolean {
-    return secondsToStopTryingToSendMessageAgainAndAgain != null &&
-           secondsToStopTryingToSendMessageAgainAndAgain >= 1    &&
-           this.firstTryAt + secondsToStopTryingToSendMessageAgainAndAgain * 1000 < Date.now();
+  canBeRemovedFromQueue(millisecondsToStopTryingToSendMessage?:number):boolean {
+    return millisecondsToStopTryingToSendMessage != null &&
+           millisecondsToStopTryingToSendMessage > 0 &&
+           this.firstTryAt + millisecondsToStopTryingToSendMessage < Date.now();
   }
 
   constructor(params:{
-    dataSentToClient: ResponseCli | NewDataForListener;
+    dataSentToClient: AsklessResponse | NewDataForListener;
     firstTryAt: number;
-    onClientReceiveWithSuccess?: OnClientSuccessfullyReceives;
-    onClientFailsToReceive?: OnClientFailsToReceive;
+    onClientReceiveOutputWithSuccess: () => void;
   }) {
     this.dataSentToClient = params.dataSentToClient;
     this.firstTryAt = params.firstTryAt;
-    this.onClientReceiveWithSuccess = params.onClientReceiveWithSuccess;
-    this.onClientFailsToReceive = params.onClientFailsToReceive;
+    this.onClientReceiveOutputWithSuccess = params.onClientReceiveOutputWithSuccess;
   }
 }
 /** @internal */
 export type RouteBeingListen = {
   route: string;
-  clientId;
+  clientIdInternalApp;
   listenId: string;
-  query;
+  params;
+  locals;
+  authenticationStatus:"authenticatedOrNot" | "authenticatedOnly"
 };
-/** @internal */ //TODO: apagar ClientInfo caso estiver sobrando em runtime
+/** @internal */
 export class ClientInfo {
   pendingMessages: Array<PendingMessage> = [];
-  onClose: VoidFunction;
+  onClose: () => void;
   lastClientRequestList: LastClientRequest[] = [];
   disconnectedAt?: number;
   sendMessage?: SendMessageToClientCallback;
-  headers?: object;
-  doWsDisconnect?: VoidFunction;
+  authentication: "pending" | "unauthenticated" | "authenticated" = "pending";
+  doWsDisconnect?: () => void;
   routesBeingListen: Array<RouteBeingListen> = [];
   clientType: "flutter" | "javascript";
   readonly createdAt:number = Date.now();
+  userId?:string | number;
+  claims?:string[];
+  locals:object = {};
+  credentialErrorCode?: string;
 
-  constructor(public readonly clientId: string | number, public readonly server:ServerInternalImp) {}
+  clearAuthentication() {
+    this.userId = this.claims = this.credentialErrorCode = null;
+    this.locals = {};
+    this.authentication = "pending";
+    this.pendingMessages = [];
+  }
 
-  canBeDeleted(intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient:number) : boolean{
+  constructor(public readonly clientIdInternalApp: string, public readonly askless:AsklessServer) {}
+
+  canBeDeleted(intervalInMillsecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient:number) : boolean{
     if( //websocket connection haven't been performed
         this.disconnectedAt == null &&
         this.sendMessage == null &&
@@ -74,30 +80,20 @@ export class ClientInfo {
         this.onClose == null &&
         this.createdAt + (20 * 1000) < Date.now()
     ){
-      this.server.logger("deleting client data that haven't been used", "debug");
+      this.askless.logger("deleting client data that haven't been used", "debug");
       return true;
     }
 
     return this.disconnectedAt != null && (
-        this.disconnectedAt + intervalInSecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient * 1000 < Date.now()
+        this.disconnectedAt + intervalInMillsecondsCheckIfIsNeededToClearRuntimeDataFromDisconnectedClient < Date.now()
     );
   }
 }
 /** @internal */
 export class Clients {
-  private readonly clientId_clientInfo: Map<
-    number | string,
-    ClientInfo
-  > = new Map<string, ClientInfo>();
+  private readonly clientIdInternalApp_clientInfo: Map<string, ClientInfo> = new Map<string, ClientInfo>();
 
-  constructor(public readonly server: ServerInternalImp) {}
-
-  setHeaders(clientId: string | number, headers) {
-    this.getOrCreateClientInfo(clientId).headers = headers;
-  }
-  getHeaders(clientId: string | number): object|undefined {
-    return this.getOrCreateClientInfo(clientId).headers;
-  }
+  constructor(public readonly askless:AsklessServer) {}
 
   stopListening(clientInfo: ClientInfo, listenId: string) {
     const routeBeingListen = clientInfo.routesBeingListen.find(
@@ -106,18 +102,20 @@ export class Clients {
     if (!routeBeingListen) {
       throw Error("routeBeingListen not found " + listenId);
     }
-    this.server
+    this.askless
       .getReadRoute(routeBeingListen.route)
-      .stopListening(clientInfo.clientId, listenId, routeBeingListen.route);
+      .stopListening(clientInfo.clientIdInternalApp, listenId, routeBeingListen.route);
   }
 
   removePendingMessage(
-    clientId: string | number,
-    clientReceived: boolean,
+    clientIdInternalApp: string,
+    responseHasBeenReceived: boolean,
     serverId?: string
   ): void {
-    let clientInfo: ClientInfo = this.clientId_clientInfo[clientId];
-    if (!clientInfo) return;
+    let clientInfo: ClientInfo = this.clientIdInternalApp_clientInfo[clientIdInternalApp];
+    if (!clientInfo) {
+      return;
+    }
 
     let remove: Array<PendingMessage>;
     if (serverId) {
@@ -130,10 +128,10 @@ export class Clients {
       remove = clientInfo.pendingMessages;
     }
     remove.forEach((p) => {
-      if (clientReceived && p.onClientReceiveWithSuccess) {
-        p.onClientReceiveWithSuccess(clientId);
-      } else if (!clientReceived && p.onClientFailsToReceive) {
-        p.onClientFailsToReceive(clientId);
+      if (p.dataSentToClient instanceof NewDataForListener || (p.dataSentToClient instanceof AsklessResponse && p.dataSentToClient.success)) {
+        if (responseHasBeenReceived && p.onClientReceiveOutputWithSuccess) {
+          p.onClientReceiveOutputWithSuccess();
+        }
       }
     });
     remove.forEach((r) =>
@@ -145,42 +143,49 @@ export class Clients {
   }
 
   getAllClientsInfos() {
-    return this.clientId_clientInfo;
+    return this.clientIdInternalApp_clientInfo;
   }
 
-  getOrCreateClientInfo(clientId: number | string): ClientInfo {
-    let res = this.clientId_clientInfo[clientId] as ClientInfo;
+  getOrCreateClientInfo(clientIdInternalApp: string): ClientInfo {
+    if (clientIdInternalApp == null || clientIdInternalApp == "undefined") {
+      throw Error("getOrCreateClientInfo: clientIdInternalApp is null/undefined");
+    }
+    let res:ClientInfo = this.clientIdInternalApp_clientInfo[clientIdInternalApp] ;
     if (!res)
-      res = this.clientId_clientInfo[clientId] = new ClientInfo(clientId, this.server);
+      res = this.clientIdInternalApp_clientInfo[clientIdInternalApp] = new ClientInfo(clientIdInternalApp, this.askless);
     return res;
   }
 
-  deleteClientsInfos(clearClientsIds: Array<string | number>) {
-    if (clearClientsIds.length == 0) return;
-    this.server.logger("deleteClientsInfos", "debug", clearClientsIds);
-    clearClientsIds.forEach((clientId) => {
-      const clientInfo = this.clientId_clientInfo[clientId] as ClientInfo;
-      for (
-        let route = 0;
-        route < clientInfo.routesBeingListen.length;
-        route++
-      ) {
-        const routeBeingListen = clientInfo.routesBeingListen[route];
-        this.server
-          .getReadRoute(routeBeingListen.route)
-          .stopListening(clientId);
-      }
-      if (clientInfo.doWsDisconnect)
+  deleteClientsInfos(clearByClientIdInternalAppIDS: Array<string>) {
+    if (clearByClientIdInternalAppIDS.length == 0) return;
+    this.askless.logger("deleteClientsInfos", "debug", clearByClientIdInternalAppIDS);
+    clearByClientIdInternalAppIDS.forEach((clientIdInternalApp) => {
+      const clientInfo = this.clientIdInternalApp_clientInfo[clientIdInternalApp] as ClientInfo;
+      if (clientInfo.doWsDisconnect) {
         clientInfo.doWsDisconnect();
-      delete this.clientId_clientInfo[clientId];
+      }
+      delete this.clientIdInternalApp_clientInfo[clientIdInternalApp];
     });
   }
 
-  removeClientInfo(clientId: number | string) {
-    const clientInfo = this.clientId_clientInfo[clientId] as ClientInfo;
+  removeClientInfo(clientIdInternalApp: string) {
+    const clientInfo = this.clientIdInternalApp_clientInfo[clientIdInternalApp] as ClientInfo;
     if(clientInfo && clientInfo.doWsDisconnect){
       clientInfo.doWsDisconnect();
     }
-    delete this.clientId_clientInfo[clientId];
+    delete this.clientIdInternalApp_clientInfo[clientIdInternalApp];
+  }
+
+  // getClientByUserId(userId: USER_ID) : ClientInfo | null {
+  //   for (const clientIdInternalApp of Object.keys(this.clientIdInternalApp_clientInfo)) {
+  //     const client = this.clientIdInternalApp_clientInfo[clientIdInternalApp];
+  //     if (client.userId.toString() == userId.toString()) {
+  //       return client;
+  //     }
+  //   }
+  //   return null;
+  // }
+  getClientInfoByUserId(userId) {
+    return Object.values(this.clientIdInternalApp_clientInfo).find((item:ClientInfo )=> item.userId == userId);
   }
 }

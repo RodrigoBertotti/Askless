@@ -25,10 +25,23 @@ export class ConfigureConnectionRequestCli extends AbstractRequestCli {
 
   public clientType:'flutter'|'javascript';
 
-  constructor(public clientId, public headers) {
+  constructor(public clientIdInternalApp) {
     super(RequestType.CONFIGURE_CONNECTION);
   }
 }
+
+export class AuthenticateRequestCli extends AbstractRequestCli {
+  public static readonly type = "_class_type_authenticaterequest";
+  private readonly _class_type_authenticaterequest = "_";
+
+  readonly credential;
+  readonly clientIdInternalApp: string;
+
+  constructor() {
+    super(RequestType.AUTHENTICATE);
+  }
+}
+
 /** @internal */
 export class ModifyCli extends AbstractRequestCli {
   static readonly type = "_class_type_modify";
@@ -39,7 +52,7 @@ export class ModifyCli extends AbstractRequestCli {
     public route: string,
     modificationType: ModificationType,
     public body?,
-    public query?: object
+    public params?: object
   ) {
     super((modificationType as unknown) as RequestType);
   }
@@ -55,7 +68,7 @@ export class ReadCli extends AbstractRequestCli {
   private readonly _class_type_read = "_";
   private callback: Callback;
 
-  constructor(public route: string, public query?: object) {
+  constructor(public route: string, public params?: object) {
     super(RequestType.READ);
   }
 
@@ -73,7 +86,7 @@ export class ListenCli extends AbstractRequestCli {
   constructor(
     public route: string,
     public listenId: string,
-    public query?: object
+    public params?: object
   ) {
     super(RequestType.LISTEN);
   }

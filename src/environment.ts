@@ -1,15 +1,15 @@
 export const environment = {
   server: {
-    name: "1.1.0", //TODO onupdate: change package.json as well
-    code: 2,
+    name: "2.0.0", //TODO onupdate: change package.json as well
+    code: 4,
     clientVersionCodeSupported: {
       flutter: {
-        moreThanOrEqual: null,
+        moreThanOrEqual: 4,
         lessThanOrEqual: null,
       },
-      javascript: {
+      javascript: { /* not supported anymore */
         moreThanOrEqual: null,
-        lessThanOrEqual: null,
+        lessThanOrEqual: 3,
       },
     }
   }

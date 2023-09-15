@@ -1,9 +1,9 @@
 import {makeId} from "../../Utils";
-import {RespondError} from "./RespondError";
+import {AsklessError} from "./AsklessError";
 
 
 /** @internal */
-export class ResponseCli {
+export class AsklessResponse {
   private readonly _class_type_response = "_";
   public static readonly RESPONSE_PREFIX = "RES-";
 
@@ -12,23 +12,27 @@ export class ResponseCli {
   constructor(
     public readonly clientRequestId: string, // evitar que o servidor receba 2 vezes a mesma mensagem e evitar que o cliente receba 2 vezes a mesma mensagem
     public readonly output: any,
-    public readonly error?: RespondError,
-    public dataType = "ResponseCli",
+    public readonly error?: AsklessError,
+    public dataType = "AsklessResponse",
     serverId?: string
   ) {
+    if (clientRequestId == null) {
+      throw Error("AsklessResponse: clientRequestId is null");
+    }
+
     if (serverId == null)
-      this.serverId = ResponseCli.RESPONSE_PREFIX + makeId(11);
+      this.serverId = AsklessResponse.RESPONSE_PREFIX + makeId(11);
     else
       this.serverId = serverId;
   }
 
-  get isSuccess(): boolean {
+  get success(): boolean {
     return this.error == null;
   }
 }
 
 /** @internal */
-export class ServerConfirmReceiptCli extends ResponseCli {
+export class ServerConfirmReceiptCli extends AsklessResponse {
   //enviar 1 vez após o recebimento da informação e deve ficar enviando isso TODA vez que o servidor tentar enviar a informação novamente
   private readonly _class_type_serverconfirmreceipt = "_";
 
@@ -38,16 +42,32 @@ export class ServerConfirmReceiptCli extends ResponseCli {
 }
 
 /** @internal */
-export class ConfigureConnectionResponseCli extends ResponseCli {
+export class ConfigureConnectionAsklessResponse extends AsklessResponse {
   private readonly _class_type_configureconnection = "_";
 
   constructor(clientRequestId: string, connectionConfiguration) {
     super(
       clientRequestId,
-      connectionConfiguration,
+        { connectionConfiguration: connectionConfiguration },
       undefined,
-      "ConfigureConnectionResponse"
+      "ConfigureConnectionResponse",
     );
   }
 }
 
+export class AuthenticateAsklessResponse extends AsklessResponse {
+  private readonly _class_type_authenticateresponse = "_";
+
+  constructor(
+      clientRequestId: string,
+      output: {credentialErrorCode?:string, userId?: string | number, claims?: string []},
+      error?: AsklessError
+  ) {
+    super(
+        clientRequestId,
+        output,
+        error,
+        "ConfigureConnectionResponse",
+    );
+  }
+}

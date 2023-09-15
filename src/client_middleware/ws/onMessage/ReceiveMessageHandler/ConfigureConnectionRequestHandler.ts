@@ -1,77 +1,75 @@
 import {ConfigureConnectionRequestCli} from "../../../../client/RequestCli";
-import {RespondErrorCode, ServerError, ServerInternalImp, ws_clientId, ws_clientType} from "../../../../index";
-import {ConfigureConnectionResponseCli} from "../../../../client/response/OtherResponses";
-import {ClientInfo, Clients} from "../../../Clients";
+import {
+    AsklessServer,
+    ws_clientIdInternalApp,
+    ws_clientType
+} from "../../../../index";
+import {ConfigureConnectionAsklessResponse} from "../../../../client/response/OtherResponses";
+import {ClientInfo} from "../../../Clients";
 import WebSocket = require("ws");
-import {getOwnClientId} from "../../../../Utils";
 
+/** step one */
 
 export class ConfigureConnectionRequestHandler {
 
-    constructor(public readonly internalServerImp: ServerInternalImp) {}
+    constructor(public readonly askless: AsklessServer) {}
 
-    async handle(input, clientWsEndpoint:WebSocket) : Promise<void> {
+    async handle(input:ConfigureConnectionRequestCli, clientWsEndpoint:WebSocket) : Promise<void> {
         input = Object.assign({}, input) as ConfigureConnectionRequestCli;
-        const ownClientIdOrNull = getOwnClientId(input.clientId);
-        if (
-            ownClientIdOrNull != null &&
-            this.internalServerImp.config.grantConnection &&
-            !(await this.internalServerImp.config.grantConnection(ownClientIdOrNull, input.headers))
-        ) {
-            throw new ServerError(
-                "The client " +
-                clientWsEndpoint[ws_clientId]?.toString() +
-                " doesn't informed a valid token on header",
-                RespondErrorCode.TOKEN_INVALID
-            );
+        if (input.clientIdInternalApp == null) {
+            throw Error("input.clientIdInternalApp is null");
         }
-        clientWsEndpoint[ws_clientId] = clientWsEndpoint[ws_clientId] = input.clientId;
+        clientWsEndpoint[ws_clientIdInternalApp] = input.clientIdInternalApp;
         clientWsEndpoint[ws_clientType] = input.clientType;
 
-        const clients = this.internalServerImp.clientMiddleware.clients;
-        clients.removeClientInfo(clientWsEndpoint[ws_clientId]); //Quando o cliente se desconecta e se conecta novamente, o clientId é o mesmo
         this.configureClientInfo(input.clientType, clientWsEndpoint);
 
-        this.internalServerImp.clientMiddleware.clients.setHeaders(clientWsEndpoint[ws_clientId], input.headers || {});
-        // console.log('-------------- INPUT ConfigureConnectionRequestCli ---------------');
-        // console.log(JSON.stringify(_input));
-        this.internalServerImp.clientMiddleware.confirmReceiptToClient(clientWsEndpoint[ws_clientId], input.clientRequestId);
-        //clientMiddleware.sendDataToClient(clientId,'test');
-        this.internalServerImp.clientMiddleware.assertSendDataToClient(
-            clientWsEndpoint[ws_clientId],
-            new ConfigureConnectionResponseCli(
+        this.askless.clientMiddleware.confirmReceiptToClient(clientWsEndpoint[ws_clientIdInternalApp], input.clientRequestId);
+
+        this.askless.clientMiddleware.assertSendDataToClient(
+            clientWsEndpoint[ws_clientIdInternalApp],
+            new ConfigureConnectionAsklessResponse(
                 input.clientRequestId,
-                this.internalServerImp.getConnectionConfiguration(clientWsEndpoint[ws_clientType])
+                this.askless.getConnectionConfiguration(clientWsEndpoint[ws_clientType]),
             ),
-           true,
-        ); //TEM QUE VIR DEPOIS DE onHeadersRequestCallback
+            true,
+            () => {},
+        );
     }
 
     private configureClientInfo(clientType:'flutter' | 'javascript', clientWsEndpoint:WebSocket) : ClientInfo {
-        const clientInfo = this.internalServerImp.clientMiddleware.clients.getOrCreateClientInfo(clientWsEndpoint[ws_clientId]);
+        const clientInfo = this.askless.clientMiddleware.clients.getOrCreateClientInfo(clientWsEndpoint[ws_clientIdInternalApp]);
         clientInfo.clientType = clientType;
+        clientInfo.clearAuthentication();
         clientInfo.sendMessage = (message: string) => {
             try {
                 if (clientWsEndpoint) {
                     clientWsEndpoint.send(message);
                 } else {
-                    this.internalServerImp.logger("ClientMiddleware: this.ws null: the client " + clientWsEndpoint[ws_clientId] + " is not connected anymore", "error");
+                    this.askless.logger("ClientMiddleware: this.ws null: the client " + clientWsEndpoint[ws_clientIdInternalApp] + " is not connected anymore", "error");
                 }
             } catch (e) {
-                this.internalServerImp.logger("ClientMiddleware", "error", e);
+                this.askless.logger("ClientMiddleware", "error", e);
             }
         };
         clientInfo.onClose = () => {
-            this.internalServerImp.logger("onClose websocket " + clientWsEndpoint[ws_clientId], "debug");
+            this.askless.logger("onClose websocket " + clientWsEndpoint[ws_clientIdInternalApp], "debug");
+
+            Array.from(clientInfo.routesBeingListen).forEach((routeBeingListen) => {
+               this.askless.getReadRoute(routeBeingListen.route).stopListening(clientInfo.clientIdInternalApp, routeBeingListen.listenId, routeBeingListen.route);
+            });
+
             //Apaga apenas as informações relacionadas a conexão, não apaga mensagens pendentes
-            //As respostas serão deixadas ainda, serão apagadas depois com o clientId_disconnectedAt
+            //As respostas serão deixadas ainda, serão apagadas depois
+            clientInfo.userId = undefined;
+            clientInfo.claims = undefined;
             clientInfo.sendMessage = undefined;
-            clientInfo.headers = undefined;
+            clientInfo.authentication = undefined;
             clientInfo.doWsDisconnect = undefined;
             clientInfo.disconnectedAt = Date.now();
         };
         clientInfo.doWsDisconnect = () => {
-            this.internalServerImp.logger("doWsDisconnect " + clientWsEndpoint[ws_clientId], "debug");
+            this.askless.logger("doWsDisconnect " + clientWsEndpoint[ws_clientIdInternalApp], "debug");
             clientWsEndpoint.close();
         };
         return clientInfo;

@@ -1,4 +1,4 @@
-import { ServerInternalImp } from "../index";
+import {AsklessServer} from "../index";
 
 export abstract class AbstractTimedTask {
   private _started = false;
@@ -13,7 +13,7 @@ export abstract class AbstractTimedTask {
     this._started = false;
   }
 
-  protected constructor(public readonly server: ServerInternalImp) {}
+  protected constructor(public readonly server: AsklessServer) {}
 
   protected abstract run();
 

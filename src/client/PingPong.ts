@@ -6,7 +6,7 @@ export class PingPong {
   constructor(
     public listeningToRoutes: Array<{
       route: string;
-      query;
+      params;
       listenId: string;
       clientRequestId: string;
     }>

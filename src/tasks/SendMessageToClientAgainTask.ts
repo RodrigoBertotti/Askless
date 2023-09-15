@@ -1,10 +1,8 @@
-import { ResponseCli } from "../client/response/OtherResponses";
 import { AbstractTimedTask } from "./AbstractTimedTask";
-import { ClientInfo } from "../client_middleware/Clients";
-import { ServerInternalImp } from "../index";
+import {AsklessServer} from "../index";
 
 export class SendMessageToClientAgainTask extends AbstractTimedTask {
-  constructor(server: ServerInternalImp) {
+  constructor(server: AsklessServer<any>) {
     super(server);
   }
 
@@ -15,13 +13,13 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
       this.server.logger("SendMessageToClientAgainTask: this.server?.clientMiddleware?.clients?.getAllClientsInfos() IS NULL", "error");
       return;
     }
-    for (let clientId in clientsId_clientInfo) {
+    for (let clientId of Object.keys(clientsId_clientInfo)) {
       if (!clientsId_clientInfo.hasOwnProperty(clientId)) {
         return;
       }
-      const info = clientsId_clientInfo[clientId] as ClientInfo;
+      const info = clientsId_clientInfo[clientId];
       const removePendingMessageThatClientShouldReceiveList_clientId_serverId: Array<{
-        clientId: string | number;
+        clientIdInternalApp: string;
         serverId: string;
       }> = [];
       info.pendingMessages.forEach((pending) => {
@@ -29,14 +27,13 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
           clientId,
           pending.dataSentToClient,
           false,
-          undefined,
-          undefined
+            pending.onClientReceiveOutputWithSuccess,
         );
 
-        if (pending.canBeRemovedFromQueue((this.server.config ?? {})["secondsToStopTryingToSendMessageAgainAndAgain"])) {
+        if (pending.canBeRemovedFromQueue((this.server.config ?? {})["millisecondsToStopTryingToSendMessage"])) {
           removePendingMessageThatClientShouldReceiveList_clientId_serverId.push(
             {
-              clientId: clientId,
+              clientIdInternalApp: clientId,
               serverId: pending.dataSentToClient.serverId,
             }
           );
@@ -46,7 +43,7 @@ export class SendMessageToClientAgainTask extends AbstractTimedTask {
       for (let i = 0; i < removePendingMessageThatClientShouldReceiveList_clientId_serverId.length; i++) {
         const re = removePendingMessageThatClientShouldReceiveList_clientId_serverId[i];
         this.server.clientMiddleware.clients.removePendingMessage(
-          re.clientId,
+          re.clientIdInternalApp,
           false,
           re.serverId
         );

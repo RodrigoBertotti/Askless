@@ -1,11 +1,6 @@
-import {AsklessServer} from "../../dist/askless";
-import {SimpleCheckBearerExample} from "./auth/SimpleCheckBearerExample";
-import {
-    createProductRoute,
-    deleteProductRoute,
-    listAllProductsReversedRoute,
-    listAllProductsRoute
-} from "./routes/ProductsRoute";
+import {AsklessServer} from "../../src";
+import {FakeAuthentication} from "./auth/fake-authentication";
+import {initializeControllers} from "./controllers/controllers-and-services";
 
 
 const server:AsklessServer = new AsklessServer();
@@ -13,29 +8,17 @@ const server:AsklessServer = new AsklessServer();
 const isProduction = false;
 
 server.init({
-    projectName: 'catalog',
-    grantConnection: SimpleCheckBearerExample.validateToken,
-    sendInternalErrorsToClient: !isProduction,
-    logger: isProduction ? undefined : { // DO NOT DO SHOW ASKLESS LOGS ON THE CONSOLE ON A PRODUCTION ENVIRONMENT
-        customLogger: (message, level, additionalData) =>{
-            console.log(level +': '+message);
-            if(additionalData){
-                console.log(JSON.stringify(additionalData));
-            }
-        }
+    authenticate: (credential, accept, reject) => {
+        FakeAuthentication.fakeAuthenticate(credential, accept, reject)
     },
-    wsOptions : {
-        port : 3000
-    }
+    sendInternalErrorsToClient: !isProduction,
+    debugLogs: !isProduction,
+    wsOptions: { port : 3000 },
+    waitForAuthenticationTimeoutInMs: 0,
 });
 
-server.addRoute([
-    createProductRoute,
-    listAllProductsRoute,
-    listAllProductsReversedRoute,
-    deleteProductRoute,
-]);
+initializeControllers(server);
 
 server.start();
 
-console.log('my local server url: '+server.localUrl);
+console.log(`my local server url: ${server.localUrl}`);

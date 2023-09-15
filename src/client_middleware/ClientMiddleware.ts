@@ -1,24 +1,12 @@
-import { ConfigureConnectionRequestCli } from "../client/RequestCli";
-import { ReceiveMessageHandler } from "./ws/onMessage/ReceiveMessageHandler/ReceiveMessageHandler";
 import {
-  ResponseCli,
+  AsklessResponse,
   ServerConfirmReceiptCli,
 } from "../client/response/OtherResponses";
-import {NewDataForListener, RespondErrorCode} from "..";
-import * as WebSocket from "ws";
+import {NewDataForListener, AsklessErrorCode, ws_clientIdInternalApp, AsklessServer} from "..";
 import {ClientInfo, Clients, PendingMessage} from "./Clients";
-import { PingPong } from "../client/PingPong";
 import {
-  ServerInternalImp,
-  ServerError,
-  ws_clientId,
-  ws_isAlive, RespondError,
+  ws_isAlive,
 } from "../index";
-import {
-  OnClientFailsToReceive,
-  OnClientSuccessfullyReceives,
-} from "../route/ReadRoute";
-import {Runtime} from "inspector";
 import {OnMessage} from "./ws/onMessage/onMessage";
 
 
@@ -27,49 +15,53 @@ import {OnMessage} from "./ws/onMessage/onMessage";
 export class ClientMiddleware {
   readonly clients: Clients;
 
-  constructor(public readonly server: ServerInternalImp) {
-    this.clients = new Clients(server);
+  constructor(public readonly askless: AsklessServer<any>) {
+    this.clients = new Clients(askless);
   }
 
   start() {
-    const self = this;
-    this.server.wss.on("connection", (ws) => {
-
-      self.server.logger('new client connected, sending "welcome"', "debug");
+    this.askless.wss.on("connection", (ws) => {
+      this.askless.logger('new client connected, sending "welcome"', "debug");
       ws.send("welcome");
+
       ws[ws_isAlive] = true;
 
       ws.on("message", new OnMessage(this, ws).onMessage);
 
-      ws.on("error", function (_, err) {
+      ws.on("error", (_, err) => {
         // _ is websocket, but it doesn't have the clientId field
-        self.server.logger("websocket error: " + ws + " " + err.toString(), "error", {err});
+        this.askless.logger("websocket error: " + ws + " " + err.toString(), "error", {err});
       });
 
-      ws.on("close", function (_, code, reason) {
+      ws.on("close", (_, code, reason) => {
         // _ is websocket, but it doesn't have the clientId field
-        self.server.logger("websocket close: " + ws + " " + JSON.stringify(code) + " " + JSON.stringify(reason), "debug", code);
-        self.clients.getOrCreateClientInfo(ws[ws_clientId]).onClose?.();
+        this.askless.logger("websocket close: " + ws[ws_clientIdInternalApp] + " " + JSON.stringify(code) + " " + JSON.stringify(reason), "debug", code);
+        try {
+          const client = this.clients.getAllClientsInfos()[ws[ws_clientIdInternalApp]];
+          if (client && client.onClose) {
+            client.onClose();
+          }
+        } catch (e) {
+          this.askless.logger('ws on close error: '+e.toString(), "error");
+        }
       });
     });
 
-    this.server.wss.on("close", function close() {
-      self.server.disconnectClientsWhoDidntPingTask.stop();
-      self.server.sendMessageToClientAgainTask.stop();
+    this.askless.wss.on("close", () => {
+      this.askless.disconnectClientsWhoDidntPingTask.stop();
+      this.askless.sendMessageToClientAgainTask.stop();
     });
   }
 
-  confirmReceiptToClient(clientId: string | number, clientRequestId: string) {
-    // console.log("--------------> confirmReceiptToClient "+clientRequestId+" <--------------------------");
-    // console.log(new Error().stack);
-    const sendMsgCallback = this.clients.getOrCreateClientInfo(clientId).sendMessage;
+
+  confirmReceiptToClient(clientIdInternalApp: string, clientRequestId: string) {
+    const sendMsgCallback = this.clients.getOrCreateClientInfo(clientIdInternalApp).sendMessage;
     if (sendMsgCallback == null) {
       const err =
         "confirmReceiptToClient: message could not be sent: the client " +
-        clientId +
+        clientIdInternalApp +
         " is not connected anymore";
-      //console.log("VOCÊ ESTÁ TENTANDO ENVIAR MENSAGENS ANTES DO MÉTODO onHeadersRequestCallback SER CHAMADO?");
-      this.server.logger(err, "error");
+      this.askless.logger(err, "error");
       return;
     }
     sendMsgCallback(
@@ -78,32 +70,34 @@ export class ClientMiddleware {
   }
 
   assertSendDataToClient(
-    clientId: string | number,
-    sendData: ResponseCli | NewDataForListener,
-    ifFailTryAgain?: boolean,
-    onClientReceiveWithSuccess?: OnClientSuccessfullyReceives,
-    onClientFailsToReceive?: OnClientFailsToReceive
+    clientIdInternalApp: string,
+    sendData: AsklessResponse | NewDataForListener,
+    ifFailTryAgain: boolean,
+    onClientReceiveOutputWithSuccess: () => void,
   ): void {
     try {
-      const clientInfo = this.clients.getOrCreateClientInfo(clientId);
+      const clientInfo = this.clients.getOrCreateClientInfo(clientIdInternalApp);
 
       if (ifFailTryAgain == null || ifFailTryAgain)
         clientInfo.pendingMessages.push(new PendingMessage({
           dataSentToClient: sendData,
           firstTryAt: Date.now(),
-          onClientReceiveWithSuccess: onClientReceiveWithSuccess,
-          onClientFailsToReceive: onClientFailsToReceive,
+          onClientReceiveOutputWithSuccess: onClientReceiveOutputWithSuccess,
         }
       ));
 
-      this.server.logger("Sending message to client", "debug", sendData);
+      this.askless.logger("Sending message to client", "debug"/*, sendData*/);
 
-      if (clientInfo.sendMessage)
+      if (clientInfo.sendMessage) {
         clientInfo.sendMessage(JSON.stringify(sendData));
-      else
-        this.server.logger("Message not sent, waiting the client connect again...", "debug", sendData);
-    } catch (e) {
-      this.server.logger("assertSendDataToClient error", "error", {stack: e.stack, sendData,});
+      }else
+        this.askless.logger("Message not sent, waiting the client connect again...", "debug", sendData);
+    } catch (e:any) {
+      this.askless.logger("assertSendDataToClient error", "error", {stack: e.stack, sendData,});
     }
+  }
+
+  getClientInfoByUserId(userId) : ClientInfo {
+    return this.clients.getClientInfoByUserId(userId);
   }
 }

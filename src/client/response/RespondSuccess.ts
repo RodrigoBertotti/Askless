@@ -1,10 +1,4 @@
-import {OnClientFailsToReceive, OnClientSuccessfullyReceives} from "../../route/ReadRoute";
 
-export type RespondSuccessParams = {
-    output: any;
-    onClientSuccessfullyReceives?: OnClientSuccessfullyReceives;
-    onClientFailsToReceive?: OnClientFailsToReceive;
-};
 
 /**
  *  Must the return of the `route` when the
@@ -15,29 +9,22 @@ export type RespondSuccessParams = {
  *
  *  - `output` The data that the client will receive as response (optional).
  *
- *  - `onClientSuccessfullyReceives:(clientId) => void`
- *  Callback that is triggered when the client receives the `output` (optional).
- *
- *  - `onClientFailsToReceive:(clientId) => void`
- *  Callback that is triggered when the client did\'nt receive the `output` (optional).
+ *  - `onReceived:(clientId) => void`
+ *  A listener that is triggered every time the client receives `output` (optional).
  *
  *  @example
  *  create(context: CreateRouteContext): void {
- *      let product = context.body as Product;
+ *      let product = context.body as ProductModel;
  *      product = await productsRepository.save(product);
- *      context.respondSuccess({
+ *      context.successCallback({
  *          output: product,
- *          onClientSuccessfullyReceives: () => console.log("_CreateProduct: Client "+context.ownClientId+" received the response"),
- *          onClientFailsToReceive: () => console.log("_CreateProduct: Client "+context.ownClientId+" didn\'t receive the response"),
+ *          onReceived: () => console.log("_CreateProduct: Client "+context.userId+" received the response"),
  *      });
  *  }
  * */
-export class RespondSuccess {
+export class AsklessSuccess {
     private readonly _class_type_success = "_";
 
-    public readonly onClientFailsToReceive?: OnClientFailsToReceive;
-    public readonly onClientSuccessfullyReceives?: OnClientSuccessfullyReceives;
-    public readonly output?: any;
 
     /**
      *  The construtor param it's
@@ -45,26 +32,18 @@ export class RespondSuccess {
      *
      *  - `output` The data that the client will receive as response (optional).
      *
-     *  - `onClientSuccessfullyReceives:(clientId) => void`
-     *  Callback that is triggered when the client receives the `output` (optional).
-     *
-     *  - `onClientFailsToReceive:(clientId) => void`
-     *  Callback that is triggered when the client did\'nt receive the `output` (optional).
+     *  - `onReceived:(clientId) => void`
+     *  A listener that is triggered every time the client receives `output` (optional).
      *
      *  @example
      *  create(context: CreateRouteContext): void {
-     *      let product = context.body as Product;
+     *      let product = context.body as ProductModel;
      *      product = await productsRepository.save(product);
-     *      context.respondSuccess({
+     *      context.successCallback({
      *          output: product,
-     *          onClientSuccessfullyReceives: () => console.log("_CreateProduct: Client "+context.ownClientId+" received the response"),
-     *          onClientFailsToReceive: () => console.log("_CreateProduct: Client "+context.ownClientId+" didn\'t receive the response"),
+     *          onReceived: () => console.log("_CreateProduct: Client "+context.userId+" received the response"),
      *      });
      *  }
      */
-    constructor(successParams?: RespondSuccessParams) {
-        this.output = successParams?.output;
-        this.onClientSuccessfullyReceives = successParams?.onClientSuccessfullyReceives;
-        this.onClientFailsToReceive = successParams?.onClientFailsToReceive;
-    }
+    constructor(public readonly output) {}
 }

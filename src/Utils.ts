@@ -1,8 +1,18 @@
-export const CLIENT_GENERATED_ID_PREFIX = "CLIENT_GENERATED_ID-";
 
 export function wait(ms: number) {
   //https://stackoverflow.com/a/33292942/4508758
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function copy(value) {
+  return value == null
+      ? value
+      : typeof value == "object"
+          ? (
+              Array.isArray(value)
+                  ? value.map(e => copy(e))
+                  : Object.assign({}, value)
+          ) : value;
 }
 
 //https://stackoverflow.com/a/1349426/4508758
@@ -16,13 +26,6 @@ export function makeId(length?: number): string {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
-}
-
-export function getOwnClientId(clientId) {
-  if (clientId == null) return null;
-  return clientId.toString().startsWith(CLIENT_GENERATED_ID_PREFIX)
-      ? null
-      : clientId;
 }
 
 export function delay(time: number) {

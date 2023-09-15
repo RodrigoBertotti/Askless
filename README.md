@@ -1,131 +1,61 @@
-# Askless - server
+# Askless: **A coherent Node.js Backend for Flutter**
 
-:checkered_flag: [Português (Portuguese)](README_PORTUGUES.md)
+A framework to build websocket servers for Flutter Apps that lets you update your widgets in realtime by streaming data changes with WebSockets. Create your Flutter App without Firebase, with PostgreSQL, MySQL, or any database you want, handle WebSocket authentication, and quickly add audio and video calls with WebRTC!
 
-Framework that facilitates building servers for JavaScript and Flutter Apps
-allowing to:
+This is the server side in Node.js,
+**[click here to access the Askless Flutter Client](https://github.com/RodrigoBertotti/askless-flutter-client)**
 
-- :handshake: perform a websocket connection to exchange data that:
+## Built with Askless
 
-    - :vibration_mode: supports streams on the client side in Flutter
-
-    - :computer: supports JavaScript clients: Web and Node.js
-
-    - :arrow_right_hook: it retries to send data automatically in case of connectivity issues between the client and the server
-
-    - :label: handles multiples and identical `listen` requests from a client as a single one in the server
-
-- :pencil2: create your own CRUD operations with any database you like (**C**reate, **R**ead, **U**pdate and **D**elete)
-
-- :no_entry: restrict client access to CRUD operations
-
-- :mega: notify in real-time clients who are listening for changes in a route, you can choose:
-
-    - :no_pedestrians: only specify clients will receive the data
-
-    - :heavy_check_mark: all clients will receive the data
-
-- :lock: accept and deny connection attempts
-
-This is the server side in Node.js, check also the
-[Flutter client](https://github.com/WiseTap/askless-flutter-client) 
-or if you prefer the [JavaScript client](https://github.com/WiseTap/askless-js-client).
-
+[//]: # (TODO VIDEO)
 
 ## Important links
-*  [Server documentation](documentation/english_documentation.md)
-*  [Getting Started (Flutter client)](https://github.com/WiseTap/askless-flutter-client/blob/master/README.md)
-*  [Getting Started (JavaScript client)](https://github.com/WiseTap/askless-js-client/blob/master/README.md)
-*  [chat (example)](example/chat-js): Chat between the colors blue and green.
-*  [catalog (example)](example/catalog-ts)
+*  [Askless Backend in Node.js](https://github.com/RodrigoBertotti/askless) the backend side of this Flutter client
+*  [Documentation](documentation.md)
+*  [Askless Flutter Client](https://github.com/RodrigoBertotti/askless-flutter-client)
+
+#### Examples
+* <sup>Level: :red_circle: :white_circle: :white_circle: :white_circle: :white_circle: </sup> [Flutter Random Numbers Example](example/chat): Random numbers are generated on the server.
+* <sup>Level: :red_circle: :red_circle: :white_circle: :white_circle: :white_circle: </sup> [Flutter Simple Chat Example](example/chat): Simple chat between the colors blue and green.    
+* <sup>Level: :red_circle: :red_circle: :red_circle: :white_circle: :white_circle: </sup> [Flutter Catalog Example](example/catalog): Users adding and removing products from a catalog.
+* <sup>Level: :red_circle: :red_circle: :red_circle: :red_circle: :red_circle: </sup> [Flutter Chat App with MySQL or PostgreSQL + video and audio calls](https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs): A Flutter Chat App with MySQL, WebSockets, and Node.js, supports live video and audio calls streaming with WebRTC in Flutter
+
+[//]: # (TODO ABAIXO)
+*  [**Advanced Chat Example**](example/simple-chat-ts): A beaultiful Chat App with receiving & typing events + local storage + register & login. 
 
 ## Getting Started
 
-1 - Install
+1 - Install Askless
 
     npm install --save askless 
 
 2 - Import the package
 
-    const askless = require("askless");
+    import { AsklessServer } from "askless";
 
 3 - Create and init the server
 
-    const server = new askless.AsklessServer();
-    
+    const server = new AsklessServer();
+
     server.init({
-        projectName: 'tracking-ts',
-        wsOptions : {
-            port : 3000
-        }
+        wsOptions: { port : 3000 }
     });
 
-4 - Set the `routes` where the client will
- listen realtime data. 
- The example data that the client will listen is `trackingStatus`.
-   
-    let trackingStatus  = '';
-  
-    server.addReadRoute({
-        route: 'product/tracking',
-        read: async (context) => {
-            context.respondSuccess({
-                output: trackingStatus
-            });
-        },
-    });
-   
-5 - Set the `routes` where the client will
- create, remove and update data.
- Call `server.notifyClients(...)` when the data changes. 
+4 - Check the **[documentation](documentation.md)** and create your server first App with Askless, you can also check the **[examples](#important-links)**.
 
-    let customerSaidCounter = 0;
-    server.addCreateRoute({
-        route: 'product/customerSaid',
-        create: (async (context) =>  {
-        
-            customerSaidCounter++;
-            trackingStatus = 'Customer said: "'+context.body + '" '+ (customerSaidCounter) + " times";
+5 - Start the server
 
-            server.notifyClients('product/tracking', {
-                output: trackingStatus
-            });
-
-            context.respondSuccess();
-        }),
-    });
-
-6 - Start the server
-    
     server.start();
 
-7 - Simulating changes of `trackingStatus` in the server
-
-    let kmRemaining = 101;
-    const kmRemainingTask = setInterval(() => {
-        if(kmRemaining == 0){
-            return clearInterval(kmRemainingTask);
-        }
-
-        kmRemaining--;
-        trackingStatus = 'Product is '+kmRemaining+' km from you';
-        
-        server.notifyClients('product/tracking', {
-            output: trackingStatus
-        });
-    }, 3 * 1000);
-
-8 - Discover your server url on your local network:
+6 - Discover your server url on your local network:
     
     console.log(server.localUrl) 
     
 Run the server, it will print something like: `ws://192.168.?.?:3000`
 
-9 - Configure the [client side in Flutter.](https://github.com/WiseTap/askless-flutter-client) 
-
 ## Issues
 
-Feel free to open a issue about:
+Feel free to open an issue about:
 
 - :grey_question: questions
 
@@ -139,4 +69,6 @@ Feel free to open a issue about:
 
 [MIT](LICENSE)
 
+## Contacting me
 
+📧 rodrigo@wisetap.com
