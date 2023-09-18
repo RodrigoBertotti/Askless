@@ -7,7 +7,7 @@ This is the server side in Node.js,
 
 ## Built with Askless
 
-Check the example of a [Flutter Chat App with Node.js and MySQL](https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs). Supports video and audio calls.
+Check the example of a [Flutter Chat App with Node.js, WebSockets and MySQL](https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs), also supports video and audio calls.
 
 https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs/assets/15431956/42428123-76ab-4c5c-8ba1-29321d11b74b
 
