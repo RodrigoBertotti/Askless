@@ -1,6 +1,6 @@
 {
   "name": "askless",
-  "version": "2.0.2",
+  "version": "(TODO -> copy to 'dist' folder) 2.0.3",
   "description": "A coherent Node.js Backend for Flutter. Askless is a framework to build websocket servers for Flutter Apps that lets you update your widgets in realtime by streaming data changes with WebSockets. Create your Flutter App without Firebase, with MySQL, PostgreSQL, or any database you want, handle WebSocket authentication, and quickly add audio and video calls with WebRTC!",
   "keywords": [
     "flutter",
@@ -28,21 +28,18 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "bundle-dev": "rimraf dist && tsc --outDir dist/temp && webpack --env development=true && rimraf dist/temp",
-    "bundle-prod": "rimraf dist && tsc --outDir dist/temp && webpack --env production=true && rimraf dist/temp",
     "catalog-js": " node example/catalog-js/index.js",
     "simple-chat-ts": "rimraf example/simple-chat-tscompiled &&  npx tsc example/simple-chat-ts/index.ts --outDir example/simple-chat-tscompiled && node example/simple-chat-tscompiled/example/simple-chat-ts/index.js",
     "catalog-ts": "rimraf example/catalog-tscompiled && npx tsc example/catalog-ts/index.ts --outDir example/catalog-tscompiled && node example/catalog-tscompiled/example/catalog-ts/index.js",
     "random-numbers-ts": "rimraf example/random-numbers-tscompiled &&  npx tsc example/random-numbers-ts/index.ts --outDir example/random-numbers-tscompiled && node example/random-numbers-tscompiled/example/random-numbers-ts/index.js",
-    "prepublish": "npm run-script bundle-prod",
     "test": "tsc test/index.test.ts && node ./node_modules/mocha/bin/mocha"
   },
   "author": "Rodrigo João Bertotti <rodrigo@wisetap.com>",
   "license": "MIT",
   "dependencies": {
-    "ws": "^8.14.1",
     "bufferutil": "^4.0.7",
-    "utf-8-validate": "^6.0.3"
+    "utf-8-validate": "^6.0.3",
+    "ws": "^8.14.1"
   },
   "devDependencies": {
     "@babel/core": "^7.22.17",

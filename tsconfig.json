@@ -1,12 +1,18 @@
 {
   "compilerOptions": {
-    "module": "AMD",
-    "target": "ES5",
-    "declaration": true,
-    "outDir": "dist/askless",
+    "lib": [
+      "es5",
+      "es6"
+    ],
+    "target": "es5",
+    "module": "commonjs",
     "moduleResolution": "node",
-    "stripInternal": true,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "outDir": "./dist/askless",
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
   },
   "exclude": [
     "node_modules",
