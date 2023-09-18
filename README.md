@@ -20,9 +20,6 @@ https://github.com/RodrigoBertotti/Askless/assets/15431956/ea701f18-f1a5-422d-be
 * <sup>Level: :red_circle: :red_circle: :red_circle: :white_circle: :white_circle: </sup> [Flutter Catalog Example](example/catalog): Users adding and removing products from a catalog.
 * <sup>Level: :red_circle: :red_circle: :red_circle: :red_circle: :red_circle: </sup> [Flutter Chat App with MySQL or PostgreSQL + video and audio calls](https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs): A Flutter Chat App with MySQL, WebSockets, and Node.js, supports live video and audio calls streaming with WebRTC in Flutter
 
-[//]: # (TODO ABAIXO)
-*  [**Advanced Chat Example**](example/simple-chat-ts): A beaultiful Chat App with receiving & typing events + local storage + register & login. 
-
 ## Getting Started
 
 1 - Install Askless
