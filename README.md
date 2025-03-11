@@ -54,18 +54,6 @@ https://github.com/RodrigoBertotti/flutter_chat_app_with_nodejs/assets/15431956/
     
 Run the server, it will print something like: `ws://192.168.?.?:3000`
 
-## Issues
-
-Feel free to open an issue about:
-
-- :grey_question: questions
-
-- :bulb: suggestions
-
-- :page_facing_up: documentation improvements
-
-- :ant: potential bugs
-
 ## License
 
 [MIT](LICENSE)
